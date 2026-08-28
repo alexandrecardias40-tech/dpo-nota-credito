@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notas de Crédito — UnB / DPO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-white: #ffffff;
+      --border: #e2e8f0;
+      --border-dark: #334155;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --accent: #6366f1;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 16px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── BANNER INSTITUCIONAL UNB DPO ── */
+    .unb-banner {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 10px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+    }
+    .unb-banner-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+    .unb-banner-sub {
+      font-size: 11px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    /* ── HEADER DA APLICAÇÃO ── */
+    .app-header {
+      background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 16px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .header-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-logo {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 14px rgba(59,130,246,0.4);
+    }
+    .brand-info h1 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.025em;
+    }
+    .brand-info p {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #cbd5e1;
+      background: rgba(255,255,255,0.08);
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* STEP BAR */
+    .step-bar {
+      max-width: 1100px;
+      margin: 14px auto 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      padding: 6px 14px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .step-item.active {
+      color: #ffffff;
+      background: rgba(59,130,246,0.25);
+      border: 1px solid rgba(59,130,246,0.5);
+    }
+    .step-item.done { color: var(--success); }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .step-item.active .step-num { background: #3b82f6; color: #ffffff; }
+    .step-item.done .step-num { background: var(--success); color: #ffffff; }
+
+    /* ── CONTAINER PRINCIPAL ── */
+    main {
+      max-width: 1100px;
+      margin: 36px auto;
+      padding: 0 20px;
+    }
+    .view { animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── TELA INICIAL (CARD BRANCO MODERNO & PREMIUM) ── */
+    .hero-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 52px 48px;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.08);
+      max-width: 740px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .hero-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 12px;
+      letter-spacing: -0.04em;
+      line-height: 1.2;
+    }
+    .hero-subtitle {
+      font-size: 15px;
+      color: #475569;
+      margin-bottom: 36px;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    /* UPLOAD ZONE */
+    .upload-zone {
+      border: 2.5px dashed #cbd5e1;
+      border-radius: 20px;
+      padding: 44px 28px 36px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.28s ease;
+      background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+      position: relative;
+      display: block;
+    }
+    .upload-zone:hover {
+      border-color: #2563eb;
+      background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 50%, #eff6ff 100%);
+      transform: translateY(-3px);
+      box-shadow: 0 14px 30px -6px rgba(37,99,235,0.14);
+    }
+    .upload-zone.has-file {
+      border-color: #10b981;
+      background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
+      border-style: solid;
+    }
+    .upload-zone.drag-over {
+      border-color: #7c3aed;
+      background: linear-gradient(145deg, #faf5ff 0%, #ede9fe 50%, #faf5ff 100%);
+      transform: scale(1.015);
+    }
+    .upload-icon-box {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1.5px solid #bfdbfe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      margin: 0 auto 16px;
+      transition: all 0.28s ease;
+      box-shadow: 0 6px 16px rgba(37,99,235,0.14);
+    }
+    .upload-zone:hover .upload-icon-box {
+      transform: scale(1.1) rotate(-5deg);
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #ffffff;
+      box-shadow: 0 10px 25px rgba(37,99,235,0.3);
+    }
+    .upload-zone.has-file .upload-icon-box {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      border-color: #a7f3d0;
+      box-shadow: 0 8px 20px rgba(16,185,129,0.25);
+    }
+    .upload-zone.drag-over .upload-icon-box {
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      color: #ffffff;
+      transform: scale(1.15) rotate(6deg);
+    }
+    .upload-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 6px;
+      letter-spacing: -0.2px;
+    }
+    .upload-hint {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+    /* Badges de formato aceito */
+    .format-badges {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .format-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 13px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    .format-badge.pdf  { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .format-badge.html { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .format-badge.zip  { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+    .file-name-badge {
+      margin-top: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      background: #ffffff;
+      border: 2px solid #10b981;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #065f46;
+      box-shadow: 0 4px 14px rgba(16,185,129,0.18);
+      display: none;
+      word-break: break-all;
+      max-width: 95%;
+    }
+    .upload-zone.has-file .file-name-badge { display: inline-flex; }
+    /* Como funciona */
+    .como-funciona {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 28px;
+    }
+    @media (max-width: 640px) { .como-funciona { grid-template-columns: 1fr; } }
+    .cf-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px 14px;
+      text-align: left;
+      position: relative;
+    }
+    .cf-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+    }
+    .cf-title { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 3px; }
+    .cf-desc  { font-size: 12px; color: #64748b; line-height: 1.4; }
+
+    /* RECURSOS / FEATURE BADGES */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 32px;
+      text-align: left;
+    }
+    .feature-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 11px;
+      color: #475569;
+    }
+    .feature-item strong { display: block; color: #0f172a; font-size: 12px; font-weight: 800; margin-bottom: 3px; }
+
+    /* ── CARDS DE REVISÃO (PASSO 2) ── */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 26px;
+      margin-bottom: 22px;
+      color: #0f172a;
+      box-shadow: 0 4px 14px rgba(15,23,42,0.04);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title-icon {
+      background: #f1f5f9;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    /* FORM GRID */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: span 3; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot.alta { background: var(--success); }
+    .dot.media { background: var(--warning); }
+    .dot.baixa { background: var(--danger); }
+
+    .field input, .field select, .field textarea {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      color: #0f172a;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 12px;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    .field textarea { resize: vertical; min-height: 76px; }
+
+    /* TIPO NC GRID */
+    .tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+    .tipo-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #ffffff;
+    }
+    .tipo-card:hover { border-color: #2563eb; background: #f8fafc; }
+    .tipo-card.sel { border-color: #2563eb; background: #eff6ff; }
+    .tipo-card input { margin-top: 3px; accent-color: #2563eb; }
+    .tipo-card strong { display: block; font-size: 13px; font-weight: 800; color: #0f172a; }
+    .tipo-card span { font-size: 11px; color: #64748b; }
+
+    /* ITEM CÉLULAS */
+    .item-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+    .item-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .cell-section { margin-bottom: 14px; }
+    .cell-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #1d4ed8;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cell-title.dest { color: #059669; }
+
+    .cell-grid { display: grid; grid-template-columns: 48px 95px 120px 85px 85px 1fr 105px; gap: 6px; }
+    .cell-col-header { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
+    .cell-input {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 9px;
+      width: 100%;
+    }
+    .cell-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+    .cell-input.auto { border-color: #60a5fa; background: #eff6ff; }
+    .cell-input.missing { border-color: #fca5a5; background: #fef2f2; }
+
+    /* ALTERNATIVAS */
+    .alt-container { margin-top: 10px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; }
+    .alt-header { font-size: 11px; font-weight: 800; color: #92400e; margin-bottom: 6px; }
+    .alt-item {
+      display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: #ffffff;
+      border: 1px solid #fcd34d; border-radius: 6px; margin-bottom: 4px; cursor: pointer; transition: background 0.15s;
+    }
+    .alt-item:hover { background: #fef3c7; }
+    .alt-nd { font-size: 12px; font-weight: 800; color: #b45309; }
+    .alt-nome { font-size: 11px; color: #4b5563; flex: 1; }
+    .alt-saldo { font-size: 11px; font-weight: 700; color: #059669; }
+
+    /* ── BOTÕES ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; border-radius: 8px;
+      font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; border: none;
+      transition: all 0.2s; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .btn-hero-process {
+      background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #1d4ed8 100%);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 16px 36px;
+      border-radius: 14px;
+      box-shadow: 0 10px 28px -4px rgba(37, 99, 235, 0.45);
+      width: 100%;
+      justify-content: center;
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.4px;
+    }
+    .btn-hero-process:hover:not(:disabled) {
+      background: linear-gradient(135deg, #0369a1 0%, #1d4ed8 50%, #1e40af 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px -4px rgba(37, 99, 235, 0.6);
+    }
+    .btn-hero-process:disabled {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      font-weight: 800;
+      cursor: not-allowed;
+      box-shadow: none;
+      opacity: 0.9;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(37,99,235,0.4);
+    }
+    .btn-success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+    }
+    .btn-success:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(16,185,129,0.4);
+    }
+    .btn-outline { background: #ffffff; color: #334155; border: 1px solid #cbd5e1; }
+    .btn-outline:hover { background: #f1f5f9; border-color: #94a3b8; }
+    .btn-close-modal {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      border: none !important;
+      font-weight: 900 !important;
+      font-size: 12px !important;
+      padding: 7px 16px !important;
+      border-radius: 6px !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
+      cursor: pointer !important;
+      transition: transform 0.15s !important;
+    }
+    .btn-close-modal:hover {
+      transform: scale(1.04) !important;
+      background: #f8fafc !important;
+    }
+    .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fca5a5; }
+    .btn-danger:hover { background: #fee2e2; }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
+
+    /* ALERTAS */
+    .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .alert-danger { background: #fef2f2; border: 1px solid #fecdd3; color: #991b1b; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: #ffffff; border-radius: 16px; width: 100%; max-width: 960px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); overflow: hidden; animation: modalUp 0.2s ease; }
+    @keyframes modalUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .modal-header { background: #0f172a; color: #ffffff; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 16px; font-weight: 800; color: #ffffff; }
+    .modal-body { flex: 1; overflow-y: auto; padding: 24px; }
+
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th { background: #0f172a; color: #ffffff; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; padding: 11px; text-align: left; border-bottom: 2px solid #334155; }
+    tbody tr { border-bottom: 1px solid #e2e8f0; transition: background 0.12s; cursor: pointer; }
+    tbody tr:hover { background: #f0f9ff; }
+    tbody td { padding: 10px; color: #020617; font-weight: 600; }
+
+    .spin { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: sp 0.7s linear infinite; display: inline-block; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- BANNER INSTITUCIONAL DPO UNB -->
+<div class="unb-banner">
+  <div>
+    <span class="unb-banner-title">Decanato de Planejamento, Orçamento e Avaliação Institucional — DPO</span>
+  </div>
+  <div>
+    <span class="unb-banner-sub">Diretoria de Orçamento — DOR | Universidade de Brasília</span>
+  </div>
+</div>
+
+<!-- HEADER DA APLICAÇÃO -->
+<header class="app-header">
+  <div class="header-content">
+    <div class="brand">
+      <div class="brand-logo">🏛️</div>
+      <div class="brand-info">
+        <h1>Notas de Crédito Orçamentárias</h1>
+        <p>Sistema Auxiliar para Emissão no SIAFIWeb</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-bar">
+    <div class="step-item active" id="si1"><div class="step-num">1</div> Upload Despacho SEI</div>
+    <div style="color:rgba(255,255,255,0.2)">➔</div>
+    <div class="step-item" id="si2"><div class="step-num">2</div> Revisão e Células</div>
+    <div style="color:rgba(255,255,255,0.2)">➔</div>
+    <div class="step-item" id="si3"><div class="step-num">3</div> Emissão XML</div>
+  </div>
+</header>
+
+<main>
+
+<!-- ════════════════════════════ PASSO 1: HERO CARD BRANCO E ELEGANTE ════════════════════════════ -->
+<div id="v-upload" class="view">
+  <div class="hero-card">
+    <h2 class="hero-title">Gerador de Notas de Crédito — UnB/DPO</h2>
+    <p class="hero-subtitle">Carregue o Despacho SEI (PDF, HTML ou ZIP do processo completo) para extração automática dos dados e cruzamento com a planilha orçamentária.</p>
+
+    <label class="upload-zone" id="zp" for="ip"
+           ondragover="dOver(event,'zp')" ondragleave="dLeave('zp')" ondrop="dDrop(event,'zp','ip')">
+      <input type="file" id="ip" accept=".pdf,.html,.htm,.zip" onchange="onPDF(this)" style="display:none;">
+      <div class="upload-icon-box" id="upload-icon">📄</div>
+      <div class="upload-title" id="upload-title">Clique para selecionar o arquivo</div>
+      <div class="upload-hint" id="upload-hint">ou arraste e solte o Despacho SEI aqui</div>
+      <div class="format-badges" id="format-badges">
+        <span class="format-badge pdf">📕 PDF</span>
+        <span class="format-badge html">📗 HTML</span>
+        <span class="format-badge zip">📦 ZIP do Processo SEI</span>
+      </div>
+      <div class="file-name-badge" id="pname"></div>
+    </label>
+
+    <div id="ustatus" class="hidden" style="margin-top:14px"></div>
+
+    <div style="margin-top:28px;">
+      <button class="btn btn-hero-process" id="bproc" onclick="processar()">
+        <span>Processar Despacho e Cruzar Dados</span>
+        <span style="font-size:18px">→</span>
+      </button>
+    </div>
+
+    <!-- COMO FUNCIONA -->
+    <div class="como-funciona">
+      <div class="cf-item">
+        <div class="cf-num">1</div>
+        <div class="cf-title">📂 Carregue o Despacho</div>
+        <div class="cf-desc">Selecione o arquivo PDF, HTML ou o ZIP completo do processo SEI exportado do sistema.</div>
+      </div>
+      <div class="cf-item">
+        <div class="cf-num">2</div>
+        <div class="cf-title">🔍 Cruzamento Automático</div>
+        <div class="cf-desc">O sistema extrai os dados do despacho e cruza com a planilha orçamentária da DOR/DPO para sugerir as células de Origem e Destino.</div>
+      </div>
+      <div class="cf-item">
+        <div class="cf-num">3</div>
+        <div class="cf-title">📥 Gere o XML SIAFIWeb</div>
+        <div class="cf-desc">Revise os dados, ajuste se necessário, e baixe o XML pronto para importar diretamente no SIAFIWeb.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ PASSO 3: SUCESSO / EMISSÃO XML ════════════════════════════ -->
+<div id="v-sucesso" class="view hidden">
+  <div class="hero-card" style="max-width:760px; text-align:left; padding:40px;">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="width:68px; height:68px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:34px; margin:0 auto 16px; box-shadow:0 10px 25px rgba(16,185,129,0.35);">
+        ✓
+      </div>
+      <h2 style="font-size:24px; font-weight:900; color:#0f172a; margin-bottom:6px;">Nota de Crédito Gerada com Sucesso!</h2>
+      <p style="font-size:14px; color:#64748b;">O arquivo <strong>.ZIP</strong> contendo o XML da Nota de Crédito foi baixado e está pronto para carga no SIAFIWeb.</p>
+    </div>
+
+    <!-- Summary Box -->
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:20px; margin-bottom:28px;">
+      <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; color:#475569; margin-bottom:12px;">Resumo da Emissão:</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px; color:#0f172a;">
+        <div><b>Processo SEI:</b> <span id="suc-sei">--</span></div>
+        <div><b>NC Referência:</b> <span id="suc-nc">--</span></div>
+        <div><b>Favorecido:</b> <span id="suc-fav">--</span></div>
+        <div><b>Valor Total:</b> <span id="suc-val" style="font-weight:800; color:#059669;">R$ 0,00</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="abrirEspelhoNC()">👁️ Espelho da NC (Visualizar)</button>
+      <button class="btn btn-outline" onclick="gerarXML(true)">⬇️ Baixar XML Novamente</button>
+      <button class="btn btn-success" onclick="resetApp()">➕ Emitir Nova NC</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ PASSO 2: REVISÃO DE DADOS ════════════════════════════ -->
+<div id="v-dados" class="view hidden">
+
+  <!-- Card 1: SEI -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-title-icon">📋</div>
+        Informações Extraídas do SEI
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="toggleTexto()">🔍 Ver texto extraído</button>
+    </div>
+
+    <div class="alert alert-warning" style="font-size:11px; padding: 8px 12px;">
+      <b>Indicadores de Confiança:</b> 
+      <span style="color:var(--success)">● Alta</span> | 
+      <span style="color:var(--warning)">● Média</span> | 
+      <span style="color:var(--danger)">● Não encontrado</span> | 
+      <span style="color:#1d4ed8">🔵 Preenchido via Planilha</span>
+    </div>
+
+    <div id="textoraw" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:12px; font-size:10px; color:#475569; max-height:160px; overflow-y:auto; font-family:monospace; margin-bottom:14px; display:none; white-space:pre-wrap;"></div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label class="field-label"><span class="dot" id="d-sei"></span>Processo SEI</label>
+        <input id="f-sei" type="text" placeholder="23106.XXXXXX/YYYY-ZZ">
+      </div>
+      <div class="field">
+        <label class="field-label"><span class="dot" id="d-nc"></span>NC de Referência</label>
+        <input id="f-nc" type="text" placeholder="2026NCXXXXXX">
+      </div>
+      <div class="field">
+        <label class="field-label"><span class="dot" id="d-val"></span>Valor (R$)</label>
+        <input id="f-val" type="text" placeholder="0,00" oninput="syncValorItens()">
+      </div>
+      <div class="field span-3">
+        <label class="field-label"><span class="dot" id="d-acao"></span>Ação Orçamentária</label>
+        <div style="display:flex; gap:8px;">
+          <input id="f-acao-cod" type="text" placeholder="XXXX" style="width:90px; flex-shrink:0; font-weight:800;">
+          <input id="f-acao-nome" type="text" placeholder="Nome completo da ação orçamentária" style="flex:1; font-size:12px; font-weight:600;" oninput="this.title=this.value">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label"><span class="dot" id="d-cnpj"></span>CNPJ Favorecido (PJ)</label>
+        <input id="f-cnpj" type="text" placeholder="XX.XXX.XXX/XXXX-XX">
+      </div>
+      <div class="field">
+        <label class="field-label"><span class="dot" id="d-cpf"></span>CPF Favorecido (PF)</label>
+        <input id="f-cpf" type="text" placeholder="XXX.XXX.XXX-XX">
+      </div>
+      <div class="field span-2">
+        <label class="field-label"><span class="dot" id="d-fav"></span>Nome do Favorecido</label>
+        <input id="f-fav" type="text" placeholder="Nome da empresa ou pessoa física">
+      </div>
+      <div class="field span-3">
+        <label class="field-label"><span class="dot" id="d-obj"></span>Objeto / Descrição</label>
+        <textarea id="f-obj" placeholder="Descrição do objeto do despacho..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Parâmetros NC -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-title-icon">⚙️</div>
+        Parâmetros da Nota de Crédito
+      </div>
+    </div>
+    <div class="tipo-grid">
+      <label class="tipo-card sel" id="t-det">
+        <input type="radio" name="tnc" value="detalhamento" checked onchange="onTipo()">
+        <div><strong>Detalhamento de Crédito</strong><span>Refinamento interno na mesma UG</span></div>
+      </label>
+      <label class="tipo-card" id="t-des">
+        <input type="radio" name="tnc" value="descentralizacao" onchange="onTipo()">
+        <div><strong>Descentralização de Crédito</strong><span>Transferência de crédito para outra UG</span></div>
+      </label>
+      <label class="tipo-card" id="t-dev">
+        <input type="radio" name="tnc" value="devolucao" onchange="onTipo()">
+        <div><strong>Devolução de Descentralização</strong><span>Devolução de crédito descentralizado</span></div>
+      </label>
+      <label class="tipo-card" id="t-anu">
+        <input type="radio" name="tnc" value="anulacao" onchange="onTipo()">
+        <div><strong>Anulação de Descentralização</strong><span>Anulação de crédito descentralizado</span></div>
+      </label>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label class="field-label">UG Emitente</label>
+        <input id="f-ug" type="text" value="154040">
+      </div>
+      <div class="field hidden" id="fg-ugfav">
+        <label class="field-label">UG Favorecida</label>
+        <input id="f-ugfav" type="text" placeholder="Código UG">
+      </div>
+      <div class="field">
+        <label class="field-label">Ano NC</label>
+        <input id="f-ano" type="text" placeholder="2026">
+      </div>
+      <div class="field">
+        <label class="field-label">Data Emissão</label>
+        <input id="f-data" type="text" placeholder="dd/mm/yyyy">
+      </div>
+      <div class="field span-3">
+        <label class="field-label">Descrição da NC <span style="font-weight:400; font-size:10px;">(SIAFIWeb)</span></label>
+        <textarea id="f-desc" style="min-height:64px;"></textarea>
+        <button class="btn btn-outline btn-sm" style="align-self:flex-start; margin-top:6px;" onclick="autoDesc()">✨ Gerar texto automático</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3: Células Orçamentárias -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-title-icon">🔢</div>
+        Células Orçamentárias (Origem & Destino)
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="abrirModal(-1,'origem')">🔍 Buscar na Planilha</button>
+        <button class="btn btn-outline btn-sm" onclick="addItem()">＋ Adicionar Item</button>
+      </div>
+    </div>
+
+    <div id="cross-result" class="hidden" style="margin-bottom:16px;"></div>
+    <div id="items"></div>
+  </div>
+
+  <!-- Barra de Ações -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:28px;">
+    <button class="btn btn-outline" onclick="goStep1()">← Voltar ao Passo 1</button>
+    <div style="display:flex; gap:12px;">
+      <button class="btn btn-primary" onclick="abrirEspelhoNC()">👁️ Espelho da NC (Visualizar)</button>
+      <button class="btn btn-success" onclick="gerarXML()">⬇️ Gerar XML SIAFIWeb</button>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<!-- ════════════════════════════ MODAL ESPELHO NC ════════════════════════════ -->
+<div class="modal-overlay" id="modal-nc">
+  <div class="modal-box" style="max-width:920px;">
+    <div class="modal-header">
+      <div class="modal-title">🏛️ Espelho da Nota de Crédito — SIAFIWeb</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button class="btn btn-primary btn-sm" onclick="window.printEspelho()">🖨️ Imprimir / Salvar PDF</button>
+        <button class="btn-close-modal" onclick="fecharEspelhoNC()">✕ FECHAR</button>
+      </div>
+    </div>
+
+    <div class="modal-body" id="espelho-printable" style="background:#ffffff; color:#020617; font-family:'Inter',sans-serif;">
+      <!-- Cabeçalho Oficial -->
+      <div style="border-bottom:2px solid #0f172a; padding-bottom:14px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div style="font-size:12px; font-weight:800; letter-spacing:1px; color:#334155; text-transform:uppercase;">UNIVERSIDADE DE BRASÍLIA — UnB</div>
+          <div style="font-size:11px; color:#64748b;">DPO — DECANATO DE PLANEJAMENTO, ORÇAMENTO E AVALIAÇÃO INSTITUCIONAL</div>
+          <div style="font-size:19px; font-weight:800; color:#0f172a; margin-top:6px;">DOCUMENTO DE EMISSÃO DE NOTA DE CRÉDITO</div>
+        </div>
+        <div style="text-align:right;">
+          <span id="esp-tipo-badge" style="background:#2563eb; color:#ffffff; font-size:11px; font-weight:800; padding:5px 12px; border-radius:6px; display:inline-block; margin-bottom:6px;">DETALHAMENTO DE CRÉDITO</span>
+          <div style="font-size:11px; color:#64748b; font-weight:600;">SIAFIWeb — Emissão Orçamentária</div>
+        </div>
+      </div>
+
+      <!-- Tabela 1: Dados Gerais -->
+      <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px; border:1px solid #94a3b8; color:#020617;">
+        <tr style="background:#f1f5f9;">
+          <td style="padding:9px 12px; border:1px solid #94a3b8; width:25%;"><b style="color:#0f172a">UG Emitente:</b> <span id="esp-ug" style="font-weight:700; color:#020617;">154040</span></td>
+          <td style="padding:9px 12px; border:1px solid #94a3b8; width:25%;"><b style="color:#0f172a">Gestão:</b> <span style="font-weight:700; color:#020617;">15257 (UnB)</span></td>
+          <td style="padding:9px 12px; border:1px solid #94a3b8; width:25%;"><b style="color:#0f172a">Data Emissão:</b> <span id="esp-data" style="font-weight:700; color:#020617;">--</span></td>
+          <td style="padding:9px 12px; border:1px solid #94a3b8; width:25%;"><b style="color:#0f172a">Ano NC:</b> <span id="esp-ano" style="font-weight:700; color:#020617;">2026</span></td>
+        </tr>
+        <tr>
+          <td style="padding:9px 12px; border:1px solid #94a3b8;" colspan="2"><b style="color:#0f172a">Processo SEI:</b> <span id="esp-sei" style="font-weight:700; color:#020617;">--</span></td>
+          <td style="padding:9px 12px; border:1px solid #94a3b8;" colspan="2"><b style="color:#0f172a">NC Ref.:</b> <span id="esp-nc" style="font-weight:700; color:#020617;">--</span></td>
+        </tr>
+        <tr style="background:#f1f5f9;">
+          <td style="padding:9px 12px; border:1px solid #94a3b8;" colspan="2"><b style="color:#0f172a">Favorecido:</b> <span id="esp-fav" style="font-weight:700; color:#020617;">--</span></td>
+          <td style="padding:9px 12px; border:1px solid #94a3b8;" colspan="2"><b style="color:#0f172a">CNPJ/CPF:</b> <span id="esp-doc" style="font-weight:700; color:#020617;">--</span></td>
+        </tr>
+        <tr>
+          <td style="padding:9px 12px; border:1px solid #94a3b8;" colspan="2"><b style="color:#0f172a">UG Favorecida:</b> <span id="esp-ugfav" style="font-weight:700; color:#020617;">154040 (Mesma UG)</span></td>
+          <td style="padding:9px 12px; border:1px solid #94a3b8;" colspan="2"><b style="color:#0f172a">Valor Total:</b> <span id="esp-valtotal" style="font-weight:800; color:#15803d; font-size:15px;">R$ 0,00</span></td>
+        </tr>
+      </table>
+
+      <!-- Tabela 2: Células Orçamentárias -->
+      <div style="font-size:13px; font-weight:800; color:#0f172a; margin-bottom:8px;">Células Orçamentárias (Origem e Destino)</div>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:11px; border:1px solid #94a3b8; color:#020617;">
+        <thead>
+          <tr style="background:#0f172a; color:#ffffff;">
+            <th style="padding:10px 8px; border:1px solid #334155; text-align:left; color:#ffffff; font-weight:900; letter-spacing:0.8px;">TIPO</th>
+            <th style="padding:10px 8px; border:1px solid #334155; text-align:center; color:#ffffff; font-weight:900; letter-spacing:0.8px;">ESF</th>
+            <th style="padding:10px 8px; border:1px solid #334155; text-align:center; color:#ffffff; font-weight:900; letter-spacing:0.8px;">PTRES</th>
+            <th style="padding:10px 8px; border:1px solid #334155; text-align:center; color:#ffffff; font-weight:900; letter-spacing:0.8px;">FONTE</th>
+            <th style="padding:10px 8px; border:1px solid #334155; text-align:center; color:#ffffff; font-weight:900; letter-spacing:0.8px;">UGR</th>
+            <th style="padding:10px 8px; border:1px solid #334155; text-align:center; color:#ffffff; font-weight:900; letter-spacing:0.8px;">PLANO INTERNO</th>
+            <th style="padding:10px 8px; border:1px solid #334155; text-align:center; color:#ffffff; font-weight:900; letter-spacing:0.8px;">NATUREZA (ND)</th>
+            <th style="padding:10px 8px; border:1px solid #334155; text-align:right; color:#ffffff; font-weight:900; letter-spacing:0.8px;">VALOR (R$)</th>
+          </tr>
+        </thead>
+        <tbody id="esp-celulas-tbody"></tbody>
+      </table>
+
+      <!-- Descrição -->
+      <div style="font-size:13px; font-weight:800; color:#0f172a; margin-bottom:6px;">Observação / Descrição da Nota de Crédito</div>
+      <div id="esp-desc" style="background:#f8fafc; border:1px solid #94a3b8; border-radius:6px; padding:12px; font-size:12px; color:#020617; font-weight:600; white-space:pre-wrap; line-height:1.5;">--</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE BUSCA NA PLANILHA -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🔍 Buscar Célula na Planilha Base</div>
+      <button class="btn-close-modal" onclick="fecharModal()">✕ FECHAR</button>
+    </div>
+    
+    <div style="padding:16px 24px; border-bottom:1px solid #e2e8f0; display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:10px;">
+      <div class="field"><label class="field-label">Ação</label><input id="mf-acao" placeholder="ex: 4572" oninput="buscar()"></div>
+      <div class="field"><label class="field-label">PTRES</label><input id="mf-ptres" placeholder="ex: 170134" oninput="buscar()"></div>
+      <div class="field"><label class="field-label">UGR</label><input id="mf-ugr" placeholder="cód ou nome" oninput="buscar()"></div>
+      <div class="field"><label class="field-label">ND</label><input id="mf-nd" placeholder="ex: 339039" oninput="buscar()"></div>
+      <div class="field"><label class="field-label">PI</label><input id="mf-pi" placeholder="VGH..." oninput="buscar()"></div>
+      <div class="field" style="align-self:flex-end">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:600; padding:8px 0;">
+          <input type="checkbox" id="mf-saldo" checked onchange="buscar()"> Apenas com saldo
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div id="mloading" class="hidden" style="text-align:center; padding:20px; color:#64748b;">
+        <div class="spin" style="border-color:#cbd5e1; border-top-color:var(--primary); margin-bottom:8px;"></div>
+        <div>Buscando...</div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Ação</th><th>PTRES</th><th>Fonte</th><th>UGR</th><th>PI</th><th>ND</th><th>Nome ND</th><th>Saldo (R$)</th></tr>
+          </thead>
+          <tbody id="mtbody"></tbody>
+        </table>
+      </div>
+      <div id="mcount" style="font-size:11px; color:#64748b; margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let SEI=null, ITEMS=[], temPlan=true, SUGESTAO=null;
+let mIdx=-1, mTipo='origem';
+
+let SELECTED_FILE = null;
+
+function dOver(e,z){e.preventDefault();g(z).classList.add('drag-over')}
+function dLeave(z){g(z).classList.remove('drag-over')}
+function dDrop(e,z,inp){
+  e.preventDefault();
+  dLeave(z);
+  if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length){
+    SELECTED_FILE = e.dataTransfer.files[0];
+    const el = g(inp);
+    try {
+      el.files = e.dataTransfer.files;
+    } catch(err) {
+      const dt = new DataTransfer();
+      dt.items.add(SELECTED_FILE);
+      el.files = dt.files;
+    }
+    onPDF(el);
+  }
+}
+function onPDF(i){
+  const files = i?.files || (SELECTED_FILE ? [SELECTED_FILE] : []);
+  if(!files || !files.length) return;
+  SELECTED_FILE = files[0];
+  g('zp').classList.add('has-file');
+  const name = SELECTED_FILE.name;
+  // Atualiza textos internos da zona de upload
+  const ti = g('upload-title'); if(ti) ti.textContent = '✅ Arquivo pronto para processar';
+  const hi = g('upload-hint');  if(hi) hi.textContent = name;
+  const fb = g('format-badges'); if(fb) fb.style.display = 'none';
+  g('pname').innerHTML = `<span style="font-size:13px; font-weight:900; color:#16a34a;">✓ Selecionado:</span> <span style="font-weight:700;">${name}</span>`;
+  const btn = g('bproc');
+  if(btn){
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  }
+}
+function onExcel(i){if(!i.files.length)return;g('ze').classList.add('has-file');g('ename').textContent='✓ '+i.files[0].name}
+function togglePlanilha(){g('planilha-override').classList.toggle('hidden')}
+
+async function processar(){
+  const pdfInput = g('ip');
+  let pdfFile = SELECTED_FILE || pdfInput?.files?.[0];
+  if(!pdfFile){
+    pdfInput.click();
+    return;
+  }
+
+  const btn=g('bproc'), st=g('ustatus');
+  btn.disabled=true;
+  btn.innerHTML='<div style="display:flex;align-items:center;justify-content:center;gap:8px"><div class="spin"></div> Lendo Despacho e Cruzando Dados...</div>';
+  show(st,'alert-info','Lendo PDF e cruzando dados...');
+
+  try{
+    const fd=new FormData();
+    fd.append('pdf', pdfFile);
+    const rp=await fetch('/api/processar-pdf',{method:'POST',body:fd});
+    const jp=await rp.json();
+    if(!jp.ok) throw new Error(jp.erro||'Erro ao processar PDF');
+    SEI=jp.dados; SUGESTAO=jp.sugestao;
+
+    const excelInput = g('ie');
+    const exf = excelInput?.files?.[0];
+    if(exf){
+      const fe=new FormData();fe.append('excel',exf);
+      await fetch('/api/carregar-planilha',{method:'POST',body:fe});
+    }
+
+    preencherCampos(SEI);
+    ITEMS=[];addItem(true);
+    renderCrossResult(SUGESTAO);
+    goStep2();
+    g('ustatus').classList.add('hidden');
+  }catch(e){
+    show(st,'alert-danger','❌ '+e.message);
+    btn.disabled=false;
+    btn.innerHTML='<span>Processar Despacho e Cruzar Dados</span><span style="font-size:18px">→</span>';
+  }
+}
+
+function preencherCampos(d){
+  const c=d.campos;
+  sv('f-sei',c.processo_sei?.valor);sv('f-nc',c.nc_referencia?.valor);
+  sv('f-val',c.valor?.valor);sv('f-acao-cod',c.acao_cod?.valor);
+  sv('f-acao-nome',c.acao_nome?.valor);sv('f-obj',c.objeto?.valor);
+  sv('f-fav',c.favorecido_nome?.valor);
+
+  if(c.cnpj?.tipo==='CPF'){sv('f-cpf',c.cnpj?.valor);setDot('d-cpf',c.cnpj?.confianca);setDot('d-cnpj','baixa')}
+  else{sv('f-cnpj',c.cnpj?.valor);setDot('d-cnpj',c.cnpj?.confianca);setDot('d-cpf','baixa')}
+
+  setDot('d-sei',c.processo_sei?.confianca);setDot('d-nc',c.nc_referencia?.confianca);
+  setDot('d-val',c.valor?.confianca);setDot('d-acao',c.acao_cod?.confianca);
+  setDot('d-fav',c.favorecido_nome?.confianca);setDot('d-obj',c.objeto?.confianca);
+
+  const tipo=c.tipo_nc?.valor||'detalhamento';
+  const r=document.querySelector(`input[name=tnc][value="${tipo}"]`);
+  if(r){r.checked=true;onTipo();}
+
+  const datas=c.data_despacho?.todas||[];
+  if(datas.length){g('f-data').value=datas[datas.length-1];g('f-ano').value=datas[datas.length-1].split('/')[2]||new Date().getFullYear();}
+  g('textoraw').textContent=d.texto||'';
+  autoDesc();
+}
+
+function setDot(id,conf){const el=g(id);if(el)el.className='dot '+(conf||'baixa')}
+function sv(id,val){const el=g(id);if(el)el.value=val||''}
+function toggleTexto(){const el=g('textoraw');el.style.display=el.style.display==='block'?'none':'block'}
+
+function autoDesc(){
+  const sei=g('f-sei').value.trim();
+  let fav=g('f-fav').value.trim();
+  const cnpj=g('f-cnpj').value.trim(), cpf=g('f-cpf').value.trim();
+  let obj=g('f-obj').value.trim();
+  const tipo=document.querySelector('input[name=tnc]:checked')?.value||'detalhamento';
+  const tl={detalhamento:'Detalhamento de crédito visando a emissão de empenho',descentralizacao:'Descentralização de crédito',devolucao:'Devolução de descentralização de crédito',anulacao:'Anulação de descentralização de crédito'}[tipo];
+  
+  // Limpar frases/fragmentos incompletos
+  fav = fav.replace(/\s+(?:Nota|NC|SEI|Processo|conforme|atender|para|de|do|da|-)\s*$/i, '').trim();
+  obj = obj.replace(/\s+(?:Nota|NC|SEI|Processo|conforme|a\s+fim\s+de|para|-)\s*$/i, '').trim();
+
+  let d='';
+  if(sei) d += `SEI: ${sei} – `;
+  d += tl;
+  if(fav){
+    d += ` a ${fav}`;
+    const doc = cnpj || cpf;
+    if(doc) d += ` (${doc})`;
+  }
+  if(obj){
+    const oc = obj.replace(/^com vistas? [àa]\s*/i,'').replace(/^[,;]\s*/,'').trim();
+    if(oc) d += `, ${oc.charAt(0).toLowerCase()+oc.slice(1)}`;
+  }
+  d = d.replace(/\s+/g,' ').trim();
+  if(!d.endsWith('.')) d += '.';
+  g('f-desc').value = d.substring(0,600);
+}
+
+function renderCrossResult(sug){
+  const box=g('cross-result');
+  if(!sug){box.classList.add('hidden');return;}
+  if(!sug.encontrou){
+    box.className='alert alert-warning';
+    box.innerHTML=`⚠️ ${sug.avisos[0]||'Células não encontradas automaticamente na planilha base.'} Preencha manualmente.`;
+    box.classList.remove('hidden');return;
+  }
+
+  let html=`<div class="alert alert-success" style="flex-direction:column; align-items:flex-start;">
+    <div><strong>✅ Cruzamento realizado com sucesso!</strong> ${sug.total_acao} linhas encontradas na planilha base para a ação.</div>`;
+
+  if(sug.origem){
+    const o=sug.origem;
+    html+=`<div style="font-size:12px; margin-top:4px;">
+      <b>Origem:</b> PTRES ${o.ptres} | Fonte ${o.fonte} | UGR ${o.ugr} | PI ${o.pi} | ND ${o.nd} (${o.nd_nome})
+      ${o.saldo>0?`<b style="color:var(--success)"> | Saldo: R$ ${o.saldo.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b>`:''}
+    </div>`;
+  }
+  if(sug.destino){
+    const d=sug.destino;
+    html+=`<div style="font-size:12px; margin-top:2px;">
+      <b>Destino:</b> PTRES ${d.ptres} | Fonte ${d.fonte} | UGR ${d.ugr} | PI ${d.pi} | ND ${d.nd||'— informe o ND'} (${d.nd_nome})
+    </div>`;
+  }
+  html+='</div>';
+  box.innerHTML=html;
+  box.classList.remove('hidden');
+}
+
+function onTipo(){
+  const tipo=document.querySelector('input[name=tnc]:checked')?.value;
+  ['det','des','dev','anu'].forEach(t=>g('t-'+t)?.classList.remove('sel'));
+  const m={detalhamento:'det',descentralizacao:'des',devolucao:'dev',anulacao:'anu'};
+  if(tipo&&m[tipo])g('t-'+m[tipo])?.classList.add('sel');
+  g('fg-ugfav').classList.toggle('hidden',tipo==='detalhamento');
+  autoDesc();
+}
+
+const COLS=[
+  {k:'esfera',lbl:'Esf.',w:'48px'},{k:'ptres',lbl:'PTRES',w:'95px'},
+  {k:'fonte',lbl:'Fonte',w:'120px'},{k:'nd',lbl:'ND',w:'85px'},
+  {k:'ugr',lbl:'UGR',w:'85px'},{k:'pi',lbl:'Plano Interno',w:'1fr'},
+  {k:'valor',lbl:'Valor R$',w:'105px'},
+];
+
+function addItem(init=false){
+  const valor=init?g('f-val')?.value||'':'';
+  let orig={esfera:'1',ptres:'',fonte:'',nd:'',ugr:'',pi:'',valor};
+  let dest={esfera:'1',ptres:'',fonte:'',nd:'',ugr:'',pi:'',valor};
+  if(init && SUGESTAO?.encontrou){
+    if(SUGESTAO.origem)orig={...orig,...SUGESTAO.origem,valor};
+    if(SUGESTAO.destino)dest={...dest,...SUGESTAO.destino,valor};
+  }
+  ITEMS.push({origens:[orig],destinos:[dest],alts:init?(SUGESTAO?.alternativas||[]):[]});
+  renderItems();
+}
+
+function rmItem(i){if(ITEMS.length<=1)return;ITEMS.splice(i,1);renderItems()}
+
+function renderItems(){
+  const cont=g('items');cont.innerHTML='';
+  ITEMS.forEach((item,i)=>{
+    const b=document.createElement('div');b.className='item-box';b.id=`ib${i}`;
+    const temAuto=SUGESTAO?.encontrou && i===0;
+    b.innerHTML=`
+      <div class="item-head">
+        <div style="font-size:14px; font-weight:800; color:#0f172a">📌 Item ${i+1}${temAuto?' <span style="font-size:11px; color:#2563eb; font-weight:700;">(✦ Dados preenchidos via cruzamento)</span>':''}</div>
+        <div>${ITEMS.length>1?`<button class="btn btn-danger btn-sm" onclick="rmItem(${i})">🗑 Remover</button>`:''}</div>
+      </div>
+      <div class="cell-section">
+        <div class="cell-title">↑ ORIGEM DE CRÉDITO <button class="btn btn-outline btn-sm" onclick="abrirModal(${i},'origem')">🔍 Buscar</button></div>
+        ${cellRow(i,'orig')}
+      </div>
+      <div class="cell-section">
+        <div class="cell-title dest">↓ DESTINO DE CRÉDITO
+          <button class="btn btn-outline btn-sm" onclick="abrirModal(${i},'destino')">🔍 Buscar</button>
+          <button class="btn btn-outline btn-sm" onclick="copiarOrig(${i})">↕ Copiar Origem</button>
+        </div>
+        ${cellRow(i,'dest')}
+        ${item.alts&&item.alts.length>1?renderAlts(i,item.alts):''}
+      </div>`;
+    cont.appendChild(b);
+    populateCell(i,'orig',item.origens[0]);
+    populateCell(i,'dest',item.destinos[0]);
+    bindInputs(i,'orig');bindInputs(i,'dest');
+  });
+}
+
+function renderAlts(i,alts){
+  if(!alts||alts.length<=1)return'';
+  let h=`<div class="alt-container"><div class="alt-header">🔀 Sub-elementos de Despesa disponíveis na planilha — clique para escolher:</div>`;
+  alts.forEach((a,ai)=>{
+    const s=a.saldo||0;
+    const sf=s>0?`R$ ${s.toLocaleString('pt-BR',{minimumFractionDigits:2})}`:'sem saldo';
+    h+=`<div class="alt-item" onclick="usarAlt(${i},${ai})">
+      <span class="alt-nd">${a.nd}</span>
+      <span class="alt-nome">${a.nd_nome||''}</span>
+      <span class="alt-saldo">${sf}</span>
+    </div>`;
+  });
+  return h+'</div>';
+}
+
+function usarAlt(itemIdx,altIdx){
+  const alt=ITEMS[itemIdx].alts[altIdx];
+  if(!alt)return;
+  const dest={...alt,valor:readCell(itemIdx,'dest').valor};
+  ITEMS[itemIdx].destinos[0]={...ITEMS[itemIdx].destinos[0],...dest};
+  populateCell(itemIdx,'dest',dest);
+}
+
+function cellRow(i,tipo){
+  const cols=COLS.map(c=>c.w).join(' ');
+  let h=`<div style="display:grid; grid-template-columns:${cols}; gap:6px;">`;
+  COLS.forEach(c=>{h+=`<div class="cell-col-header">${c.lbl}</div>`});
+  COLS.forEach(c=>{
+    h+=`<input class="cell-input" id="c${i}${tipo}${c.k}" type="text" placeholder="${c.k==='esfera'?'1':''}">`;
+  });
+  h+='</div>';return h;
+}
+
+function bindInputs(i,tipo){
+  COLS.forEach(c=>{
+    const el=g(`c${i}${tipo}${c.k}`);if(!el)return;
+    el.addEventListener('input',e=>{
+      const arr=tipo==='orig'?ITEMS[i].origens:ITEMS[i].destinos;
+      arr[0][c.k]=e.target.value;
+    });
+  });
+}
+
+function populateCell(i,tipo,data){
+  if(!data)return;
+  const isAuto=i===0&&SUGESTAO?.encontrou;
+  COLS.forEach(c=>{
+    const el=g(`c${i}${tipo}${c.k}`);if(!el)return;
+    el.value=data[c.k]||'';
+    if(isAuto&&data[c.k]){el.classList.add('auto');}
+    if(tipo==='dest'&&c.k==='nd'&&!data[c.k]){el.classList.add('missing');}
+    if(c.k==='nd'&&data.nd_nome)el.title=data.nd_nome;
+    if(c.k==='ugr'&&data.ugr_nome)el.title=data.ugr_nome;
+    if(c.k==='pi'&&data.pi_nome)el.title=data.pi_nome;
+  });
+}
+
+function readCell(i,tipo){
+  const r={};COLS.forEach(c=>{const el=g(`c${i}${tipo}${c.k}`);r[c.k]=el?el.value.trim():''});return r;
+}
+
+function copiarOrig(i){
+  const o=readCell(i,'orig');
+  const d=readCell(i,'dest');
+  ['esfera','ptres','fonte','ugr','pi','valor'].forEach(k=>{d[k]=o[k]});
+  ITEMS[i].destinos[0]={...ITEMS[i].destinos[0],...d};
+  populateCell(i,'dest',ITEMS[i].destinos[0]);
+}
+
+function syncValorItens(){
+  const v=g('f-val').value;
+  ITEMS.forEach((_,i)=>{
+    ['orig','dest'].forEach(t=>{
+      const el=g(`c${i}${t}valor`);if(el&&!el.value)el.value=v;
+    });
+  });
+}
+
+function abrirEspelhoNC(){
+  const tipo=document.querySelector('input[name=tnc]:checked')?.value||'detalhamento';
+  const tipoLabels={
+    detalhamento:'DETALHAMENTO DE CRÉDITO',
+    descentralizacao:'DESCENTRALIZAÇÃO DE CRÉDITO',
+    devolucao:'DEVOLUÇÃO DE DESCENTRALIZAÇÃO',
+    anulacao:'ANULAÇÃO DE DESCENTRALIZAÇÃO',
+  };
+  g('esp-tipo-badge').textContent=tipoLabels[tipo]||'NOTA DE CRÉDITO';
+  g('esp-ug').textContent=g('f-ug').value||'154040';
+  g('esp-data').textContent=g('f-data').value||new Date().toLocaleDateString('pt-BR');
+  g('esp-ano').textContent=g('f-ano').value||new Date().getFullYear();
+  g('esp-sei').textContent=g('f-sei').value||'--';
+  g('esp-nc').textContent=g('f-nc').value||'--';
+  g('esp-fav').textContent=g('f-fav').value||'--';
+  const doc=g('f-cnpj').value||g('f-cpf').value||'--';
+  g('esp-doc').textContent=doc;
+  const ugfav=g('f-ugfav').value.trim();
+  g('esp-ugfav').textContent=ugfav?(ugfav===g('f-ug').value?'154040 (Mesma UG)':ugfav):'154040 (Mesma UG)';
+  g('esp-desc').textContent=g('f-desc').value||'Sem observações.';
+
+  const tbody=g('esp-celulas-tbody');
+  tbody.innerHTML='';
+  let valTotalSum=0;
+
+  ITEMS.forEach((item,i)=>{
+    const orig=readCell(i,'orig');
+    const dest=readCell(i,'dest');
+    const vStr=orig.valor||dest.valor||g('f-val').value||'0';
+    const vNum=parseFloat(vStr.replace(/\./g,'').replace(',','.'))||0;
+    valTotalSum+=vNum;
+    const vFmt=vNum.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    const trO=document.createElement('tr');
+    trO.style.background='#fff1f2';
+    trO.innerHTML=`
+      <td style="padding:10px 8px; border:1px solid #94a3b8; font-weight:900; color:#991b1b; background:#ffe4e6">ORIGEM</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#020617; font-weight:700">${orig.esfera||'1'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#020617; font-weight:700">${orig.ptres||'-'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#020617; font-weight:700">${orig.fonte||'-'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#020617; font-weight:700">${orig.ugr||'-'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#020617; font-weight:700">${orig.pi||'-'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#991b1b; font-weight:900">${orig.nd||'-'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:right; color:#991b1b; font-weight:900">R$ ${vFmt}</td>
+    `;
+    tbody.appendChild(trO);
+
+    const trD=document.createElement('tr');
+    trD.style.background='#f0fdf4';
+    trD.innerHTML=`
+      <td style="padding:10px 8px; border:1px solid #94a3b8; font-weight:900; color:#15803d; background:#dcfce7">DESTINO</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#020617; font-weight:700">${dest.esfera||'1'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#020617; font-weight:700">${dest.ptres||'-'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#020617; font-weight:700">${dest.fonte||'-'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#020617; font-weight:700">${dest.ugr||'-'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#020617; font-weight:700">${dest.pi||'-'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:center; color:#15803d; font-weight:900">${dest.nd||'-'}</td>
+      <td style="padding:10px 8px; border:1px solid #94a3b8; text-align:right; color:#15803d; font-weight:900">R$ ${vFmt}</td>
+    `;
+    tbody.appendChild(trD);
+  });
+
+  g('esp-valtotal').textContent=`R$ ${valTotalSum.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  g('modal-nc').classList.add('open');
+}
+
+function fecharEspelhoNC(){ g('modal-nc').classList.remove('open'); }
+
+function printEspelho(){
+  const content=g('espelho-printable').innerHTML;
+  const win=window.open('','_blank','width=920,height=720');
+  win.document.write(`<!DOCTYPE html><html><head><title>Nota de Crédito — UnB/DPO</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;padding:30px;color:#020617}@media print{@page{margin:1.5cm}}</style></head><body>${content}<script>window.onload=function(){window.print();window.close()}<\/script></body></html>`);
+  win.document.close();
+}
+
+function abrirModal(idx,tipo){
+  mIdx=idx; mTipo=tipo;
+  const acao=g('f-acao-cod').value;
+  if(acao)g('mf-acao').value=acao;
+  g('modal').classList.add('open');
+  buscar();
+}
+function fecharModal(){g('modal').classList.remove('open')}
+
+let _bt=null;
+function buscar(){clearTimeout(_bt);_bt=setTimeout(_busca,300)}
+async function _busca(){
+  g('mloading').classList.remove('hidden');g('mtbody').innerHTML='';
+  const filtros={acao:g('mf-acao').value,ptres:g('mf-ptres').value,ugr:g('mf-ugr').value,nd:g('mf-nd').value,pi:g('mf-pi').value,apenas_saldo:g('mf-saldo').checked};
+  try{
+    const r=await fetch('/api/buscar-celulas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(filtros)});
+    const j=await r.json();g('mloading').classList.add('hidden');
+    if(j.resultados)renderTabela(j.resultados);
+  }catch(e){g('mloading').classList.add('hidden')}
+}
+
+function renderTabela(rows){
+  const tb=g('mtbody'),cnt=g('mcount');tb.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    const s=r.saldo||0; const sf=s.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    tr.innerHTML=`<td><strong>${r.acao}</strong></td><td>${r.ptres}</td><td>${r.fonte}</td>
+      <td title="${r.ugr_nome}">${r.ugr_cod}</td><td title="${r.pi_nome}">${r.pi_cod}</td>
+      <td><strong>${r.nd_cod}</strong></td><td style="font-size:11px;color:#64748b">${(r.nd_nome||'').substring(0,30)}</td>
+      <td style="font-weight:700; color:${s>0?'#16a34a':'#94a3b8'}">${sf}</td>`;
+    tr.onclick=()=>usarCelula(r);
+    tb.appendChild(tr);
+  });
+  cnt.textContent=rows.length===0?'Nenhum resultado.':`${rows.length} resultado(s). Clique na linha para selecionar.`;
+}
+
+function usarCelula(row){
+  const cel={esfera:'1',ptres:row.ptres,fonte:row.fonte,nd:row.nd_cod,nd_nome:row.nd_nome,ugr:row.ugr_cod,ugr_nome:row.ugr_nome,pi:row.pi_cod,pi_nome:row.pi_nome,valor:''};
+  const idx=mIdx>=0?mIdx:0;
+  if(mTipo==='origem'){ITEMS[idx].origens[0]={...ITEMS[idx].origens[0],...cel};populateCell(idx,'orig',ITEMS[idx].origens[0]);}
+  else{ITEMS[idx].destinos[0]={...ITEMS[idx].destinos[0],...cel};populateCell(idx,'dest',ITEMS[idx].destinos[0]);}
+  fecharModal();
+}
+
+async function gerarXML(silentOnly=false){
+  const erros = [];
+
+  function isPlaceholder(val){
+    if(!val) return true;
+    const s = String(val).trim().toUpperCase();
+    if(s === '' || s === '0' || s === '0,00' || s === 'R$ 0,00' || s === '-8') return true;
+    if(s.includes('XXXX') || s.includes('X.XXX') || s.includes('NOME DA EMPRESA') || s.includes('PESSOA FÍSICA') || s.includes('PESSOA FISICA')) return true;
+    if(s.includes('SEM INFORMACAO') || s.includes('SEM INFORMAÇÃO')) return true;
+    return false;
+  }
+
+  const tipo = document.querySelector('input[name=tnc]:checked')?.value || 'detalhamento';
+  const ug = g('f-ug')?.value?.trim();
+  const ano = g('f-ano')?.value?.trim();
+  const data = g('f-data')?.value?.trim();
+  const sei = g('f-sei')?.value?.trim();
+  const ncRef = g('f-nc')?.value?.trim();
+  const fav = g('f-fav')?.value?.trim();
+  const cnpj = g('f-cnpj')?.value?.trim();
+  const cpf = g('f-cpf')?.value?.trim();
+  const desc = g('f-desc')?.value?.trim();
+
+  if(isPlaceholder(ug)) erros.push('UG Emitente (ex: 154040)');
+  if(isPlaceholder(ano)) erros.push('Ano da Nota de Crédito (ex: 2026)');
+  if(isPlaceholder(data)) erros.push('Data de Emissão (ex: DD/MM/AAAA)');
+  if(isPlaceholder(sei)) erros.push('Número do Processo SEI válido');
+
+  if(tipo !== 'detalhamento' && isPlaceholder(ncRef)){
+    erros.push(`NC de Referência para ${tipo} (ex: 2026NC001234)`);
+  }
+
+  if(isPlaceholder(fav)) erros.push('Nome do Favorecido / Beneficiário (preencha o nome real)');
+  if(isPlaceholder(cnpj) && isPlaceholder(cpf)) erros.push('CNPJ ou CPF do Favorecido (preencha um número válido)');
+  if(isPlaceholder(desc)) erros.push('Descrição / Observação da Nota de Crédito');
+
+  if(!ITEMS || ITEMS.length === 0){
+    erros.push('Nenhum item de Célula Orçamentária foi adicionado');
+  } else {
+    ITEMS.forEach((_, i) => {
+      const orig = readCell(i, 'orig');
+      const dest = readCell(i, 'dest');
+      const n = i + 1;
+
+      // Validação de Origem
+      if(isPlaceholder(orig.ptres)) erros.push(`Item ${n} (Origem): PTRES não informado`);
+      if(isPlaceholder(orig.fonte)) erros.push(`Item ${n} (Origem): Fonte de Recurso não informada`);
+      if(isPlaceholder(orig.nd)) erros.push(`Item ${n} (Origem): Natureza de Despesa (ND) não informada`);
+      if(isPlaceholder(orig.ugr)) erros.push(`Item ${n} (Origem): UGR Responsável não informada`);
+      if(isPlaceholder(orig.pi)) erros.push(`Item ${n} (Origem): Plano Interno (PI) não informado`);
+
+      // Validação de Destino
+      if(isPlaceholder(dest.ptres)) erros.push(`Item ${n} (Destino): PTRES não informado`);
+      if(isPlaceholder(dest.fonte)) erros.push(`Item ${n} (Destino): Fonte de Recurso não informada`);
+      if(isPlaceholder(dest.nd)) erros.push(`Item ${n} (Destino): Natureza de Despesa (ND) não informada`);
+      if(isPlaceholder(dest.ugr)) erros.push(`Item ${n} (Destino): UGR Responsável não informada`);
+      if(isPlaceholder(dest.pi)) erros.push(`Item ${n} (Destino): Plano Interno (PI) não informado`);
+
+      // Validação do Valor
+      const vStr = orig.valor || dest.valor || g('f-val')?.value || '0';
+      const vNum = parseFloat(vStr.replace(/\./g, '').replace(',', '.')) || 0;
+      if(vNum <= 0) erros.push(`Item ${n}: Valor em R$ não foi preenchido ou está R$ 0,00`);
+    });
+  }
+
+  if(erros.length > 0){
+    let msg = "⚠️ ATENÇÃO: NÃO FOI POSSÍVEL GERAR O XML SIAFIWEB\n\nExistem campos obrigatórios em branco ou com dados fictícios (XXXX):\n\n";
+    erros.forEach(e => msg += `  • ${e}\n`);
+    msg += "\nPor favor, preencha as informações corretas acima para emitir a Nota de Crédito.";
+    alert(msg);
+    return;
+  }
+  const itens=ITEMS.map((_,i)=>({origens:[readCell(i,'orig')],destinos:[readCell(i,'dest')]}));
+
+  const payload={tipo_nc:tipo,ug_emitente:ug,ug_favorecida:g('f-ugfav').value.trim(),ano_nc:ano,data_emissao:data,
+    descricao:desc,processo_sei:sei,
+    nc_referencia:g('f-nc').value.trim(),favorecido_nome:fav,
+    cnpj:cnpj||cpf,itens};
+  try{
+    const res=await fetch('/api/gerar-xml',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok){const e=await res.json();alert('Erro: '+(e.erro||'Falha'));return}
+    const blob=await res.blob();const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const m=(res.headers.get('Content-Disposition')||'').match(/filename=(.+)/);
+    a.download=m?m[1]:'NC.zip';a.href=url;document.body.appendChild(a);a.click();
+    document.body.removeChild(a);URL.revokeObjectURL(url);
+
+    fecharEspelhoNC();
+    if(!silentOnly) goStep3();
+  }catch(e){alert('Erro: '+e.message)}
+}
+
+function calcularTotalItems(){
+  let sum=0;
+  ITEMS.forEach((_,i)=>{
+    const orig=readCell(i,'orig');
+    const dest=readCell(i,'dest');
+    const vStr=orig.valor||dest.valor||g('f-val')?.value||'0';
+    const vNum=parseFloat(vStr.replace(/\./g,'').replace(',','.'))||0;
+    sum+=vNum;
+  });
+  return sum;
+}
+
+function goStep3(){
+  g('v-upload').classList.add('hidden');
+  g('v-dados').classList.add('hidden');
+  g('v-sucesso').classList.remove('hidden');
+
+  g('si1').className='step-item done';
+  g('si2').className='step-item done';
+  g('si3').className='step-item active';
+
+  g('suc-sei').textContent = g('f-sei').value || '--';
+  g('suc-nc').textContent = g('f-nc').value || '--';
+  g('suc-fav').textContent = g('f-fav').value || '--';
+
+  const total = calcularTotalItems();
+  g('suc-val').textContent = `R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+}
+
+function goStep2(){
+  g('v-upload').classList.add('hidden');
+  g('v-sucesso').classList.add('hidden');
+  g('v-dados').classList.remove('hidden');
+  g('si1').className='step-item done';
+  g('si2').className='step-item active';
+  g('si3').className='step-item';
+}
+
+function goStep1(){
+  g('v-dados').classList.add('hidden');
+  g('v-sucesso').classList.add('hidden');
+  g('v-upload').classList.remove('hidden');
+  g('si1').className='step-item active';
+  g('si2').className='step-item';
+  g('si3').className='step-item';
+
+  const btn = g('bproc');
+  btn.innerHTML = '<span>Processar Despacho e Cruzar Dados</span><span style="font-size:18px">→</span>';
+  btn.disabled = !(SELECTED_FILE || g('ip')?.files?.length);
+
+  g('ustatus').classList.add('hidden');
+}
+
+function resetApp(){
+  SELECTED_FILE = null;
+  g('ip').value = '';
+  g('pname').innerHTML = '';
+  g('zp').classList.remove('has-file');
+  // Restaura textos e badges da zona de upload
+  const ti = g('upload-title'); if(ti) ti.textContent = 'Clique para selecionar o arquivo';
+  const hi = g('upload-hint');  if(hi) hi.textContent = 'ou arraste e solte o Despacho SEI aqui';
+  const fb = g('format-badges'); if(fb) fb.style.display = '';
+  SEI = null;
+  ITEMS = [];
+  SUGESTAO = null;
+  goStep1();
+}
+
+function g(id){return document.getElementById(id)}
+function show(el,cls,msg){el.className='alert '+cls;el.textContent=msg;el.classList.remove('hidden')}
+
+g('f-ano').value=new Date().getFullYear();
+</script>
+</body>
+</html>

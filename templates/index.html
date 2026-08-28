@@ -1563,6 +1563,21 @@ function g(id){return document.getElementById(id)}
 function show(el,cls,msg){el.className='alert '+cls;el.textContent=msg;el.classList.remove('hidden')}
 
 g('f-ano').value=new Date().getFullYear();
+
+// ── Keep-alive: pinga o servidor a cada 10 min para evitar adormecimento no Render ──
+(function keepAlive(){
+  const INTERVAL_MS = 10 * 60 * 1000; // 10 minutos
+  function ping(){
+    fetch('/ping')
+      .then(r => r.json())
+      .then(() => console.log('[keep-alive] servidor ativo —', new Date().toLocaleTimeString('pt-BR')))
+      .catch(() => console.warn('[keep-alive] servidor não respondeu — aguardando...'));
+  }
+  // Primeiro ping imediato ao abrir a página
+  setTimeout(ping, 5000);
+  // Pings subsequentes a cada 10 minutos
+  setInterval(ping, INTERVAL_MS);
+})();
 </script>
 </body>
 </html>

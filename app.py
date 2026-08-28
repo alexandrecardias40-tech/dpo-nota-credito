@@ -53,6 +53,12 @@ def status_planilha():
     })
 
 
+# ── Keep-alive ping (evita adormecimento no Render free tier) ─────────────────
+@app.route("/ping")
+def ping():
+    return jsonify({"status": "ok", "msg": "servidor ativo"}), 200
+
+
 # ── Processar PDF + cruzar planilha ──────────────────────────────────────────
 @app.route("/api/processar-pdf", methods=["POST"])
 def processar_pdf():

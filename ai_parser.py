@@ -35,11 +35,11 @@ Você DEVE retornar APENAS um objeto JSON válido. NÃO INVENTE DADOS que não e
 
 TEXTO DO DESPACHO:
 \"\"\"
-{texto_despacho}
+{texto_despacho[:3500]}
 \"\"\"
 """
     try:
-        response = model.generate_content(prompt)
+        response = model.generate_content(prompt, request_options={"timeout": 12})
         # Limpar a resposta caso o Gemini devolva com crases (```json)
         texto_resposta = response.text.strip()
         if texto_resposta.startswith("```json"):

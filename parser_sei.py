@@ -28,7 +28,8 @@ def parsear_despacho(file_path: str) -> dict:
                 texto = soup.get_text(" ")
         elif ext == ".pdf":
             with pdfplumber.open(file_path) as pdf:
-                for page in pdf.pages:
+                # Limita leitura às primeiras 10 páginas para prevenção de timeout
+                for page in pdf.pages[:10]:
                     texto += (page.extract_text() or "") + "\n"
         else:
             with open(file_path, "r", encoding="utf-8", errors="ignore") as f:

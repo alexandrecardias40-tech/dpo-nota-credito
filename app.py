@@ -126,8 +126,11 @@ def processar_pdf():
                 ia_utilizada = True
                 if dados_ia.get("ugr"):
                     resultado["campos"]["fonte_credito"] = {"label": "Tipo de Crédito", "valor": dados_ia["ugr"], "confianca": "alta"}
+                # nd_descricao (campo 'nd') e nd_codigo vêm direto do ai_parser agora
                 if dados_ia.get("nd"):
                     resultado["campos"]["objeto"] = {"label": "Objeto/Descrição", "valor": dados_ia["nd"], "confianca": "alta"}
+                if dados_ia.get("descricao_nc"):
+                    resultado["campos"]["descricao_ia"] = {"label": "Descrição NC (IA)", "valor": dados_ia["descricao_nc"], "confianca": "alta"}
                 if dados_ia.get("favorecido"):
                     resultado["campos"]["favorecido_nome"] = {"label": "Nome do Favorecido", "valor": dados_ia["favorecido"], "confianca": "alta"}
 
@@ -157,38 +160,11 @@ def processar_pdf():
             txt_full = texto_raw.lower()
 
             ugr_hint = fonte_cred
-            nd_hint = ""
+            # nd_hint vem diretamente do campo nd_codigo retornado pela IA (já é código numérico)
+            nd_hint = dados_ia.get("nd_codigo", "") if dados_ia else ""
             pi_hint = ""
-            
-            if dados_ia.get("nd"):
-                nd_texto = dados_ia["nd"].lower().strip()
-                ND_MAPA = {
-                    "capacitacao": "339039", "capacitação": "339039",
-                    "inscricao": "339039",  "inscrição": "339039",
-                    "inscricao em curso": "339039", "inscrição em curso": "339039",
-                    "inscricao em evento": "339039", "inscrição em evento": "339039",
-                    "treinamento": "339039",
-                    "servicos de terceiros": "339039", "serviços de terceiros": "339039",
-                    "reembolso": "339093",
-                    "restituicao": "339093", "restituição": "339093",
-                    "indenizacao": "339093", "indenização": "339093",
-                    "diaria": "339014",    "diária": "339014", "diárias": "339014",
-                    "passagem": "339033",  "passagens": "339033",
-                    "bolsa": "339018",
-                    "auxilio financeiro": "339018", "auxílio financeiro": "339018",
-                    "material de consumo": "339030", "material consumo": "339030",
-                    "equipamento": "449052", "material permanente": "449052",
-                    "gecc": "339036",
-                    "gratificacao": "339036", "gratificação": "339036",
-                }
-                nd_code = None
-                for chave, codigo in ND_MAPA.items():
-                    if chave in nd_texto or nd_texto in chave:
-                        nd_code = codigo
-                        break
-                if nd_code:
-                    nd_hint = nd_code
 
+            # Caso especial UnBTV — override de hints
             orig_ugr_hint = ""
             if "unbtv" in txt_full:
                 orig_ugr_hint = "154190"
@@ -207,21 +183,23 @@ def processar_pdf():
             )
 
             if ia_utilizada:
-                resumo = dados_ia.get('resumo', 'Resumo não gerado.')
-                ugr_ia = dados_ia.get('ugr', 'Não identificada')
-                nd_ia = dados_ia.get('nd', '')
-                fav_ia = dados_ia.get('favorecido', 'Não identificado')
-                nd_codigo = nd_hint or (sugestao or {}).get('destino') and sugestao['destino'].get('nd', '') or ''
+                resumo      = dados_ia.get('resumo', 'Resumo não gerado.')
+                ugr_ia      = dados_ia.get('ugr', 'Não identificada')
+                nd_ia       = dados_ia.get('nd', '')           # descrição textual
+                nd_codigo   = dados_ia.get('nd_codigo', '') or nd_hint   # código numérico
+                fav_ia      = dados_ia.get('favorecido', 'Não identificado')
+                descricao_nc = dados_ia.get('descricao_nc', '')
                 nd_nome_sug = (sugestao or {}).get('destino') and sugestao['destino'].get('nd_nome', '') or ''
+
                 if nd_ia and nd_codigo:
                     nd_display = f"{nd_ia} → <strong>{nd_codigo}</strong>"
                 elif nd_codigo:
-                    nd_display = f"<strong>{nd_codigo}</strong> — {nd_nome_sug} <em style='color:#94a3b8;font-size:11px;'>(encontrado pelo sistema)</em>"
+                    nd_display = f"<strong>{nd_codigo}</strong> — {nd_nome_sug or nd_ia} <em style='color:#94a3b8;font-size:11px;'>(detectado)</em>"
                 elif nd_ia:
-                    nd_display = f"{nd_ia} <em style='color:#f59e0b;font-size:11px;'>(é necessario mapear um código)</em>"
+                    nd_display = f"{nd_ia} <em style='color:#f59e0b;font-size:11px;'>(sem código mapeado)</em>"
                 else:
                     nd_display = '<em style="color:#94a3b8;">Não identificada</em>'
-                
+
                 sugestao["prova_noves"]["ugr"] = "✨ Análise da Inteligência Artificial"
                 sugestao["prova_noves"]["nd"] = f"""
                 <div style="font-size:13px; line-height:1.6; color:#1e293b;">

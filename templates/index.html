@@ -1063,10 +1063,17 @@ async function processar(){
     }
 
     preencherCampos(SEI);
-    if (jp.dados_ia && jp.dados_ia.descricao_nc) {
-      g('f-desc').value = jp.dados_ia.descricao_nc;
-      g('f-desc').style.height = '';
-      g('f-desc').style.height = g('f-desc').scrollHeight + 'px';
+    // Auto-preencher campos com dados da IA (descricao_nc e favorecido)
+    if (jp.dados_ia) {
+      if (jp.dados_ia.descricao_nc) {
+        g('f-desc').value = jp.dados_ia.descricao_nc;
+        g('f-desc').style.height = '';
+        g('f-desc').style.height = g('f-desc').scrollHeight + 'px';
+      }
+      // Se o campo favorecido veio vazio do PDF mas a IA achou, preenche
+      if (jp.dados_ia.favorecido && !g('f-fav').value) {
+        sv('f-fav', jp.dados_ia.favorecido);
+      }
     }
     ITEMS=[];addItem(true);
     renderCrossResult(SUGESTAO);

@@ -101,26 +101,12 @@ def processar_pdf():
             import re
             texto_completo_ia = resultado["texto"]
             
-            marcadores_inicio = [
-                r'(?i)(homologad[ao]\s+a)',
-                r'(?i)(solicito\s+o)',
-                r'(?i)(solicita-se)',
-                r'(?i)(ao\s+decanato)',
-                r'(?i)(encaminhe[-\s]se)',
-                r'(?i)(em\s+atenção)',
-                r'(?i)(trata[-\s]se)',
-                r'(?i)(pelo\s+exposto)',
-                r'(?i)(diante\s+do)',
-                r'(?i)(\bdespacho\b[^nº])',
-            ]
+            # Envia o texto completo do PDF para a IA — ela já é instruída a ignorar o cabeçalho SEI
+            # A tentativa anterior de cortar o texto pelo marcador causava casos onde só
+            # o cabeçalho (ex: "Despacho XXXXX SEI ...") era enviado, resultando em resposta vazia.
             texto_para_ia = texto_completo_ia
-            for marcador in marcadores_inicio:
-                m = re.search(marcador, texto_completo_ia)
-                if m:
-                    texto_para_ia = texto_completo_ia[m.start():]
-                    break
             
-            print(f"TEXTO ENVIADO PARA IA (inicio):\n{texto_para_ia[:300]}", flush=True)
+            print(f"TEXTO ENVIADO PARA IA (inicio):\\n{texto_para_ia[:300]}", flush=True)
             dados_ia = extrair_dados_com_ia(texto_para_ia, api_key)
             if dados_ia and not dados_ia.get("erro"):
                 ia_utilizada = True

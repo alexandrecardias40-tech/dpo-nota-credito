@@ -14,6 +14,57 @@ import pdfplumber
 from bs4 import BeautifulSoup
 
 
+def _extrair_texto_pdf(file_path: str) -> str:
+    """
+    Extrai texto de PDF usando múltiplas estratégias.
+    Fallback automático para PDFs do SEI com layout de colunas ou texto fragmentado.
+    """
+    with pdfplumber.open(file_path) as pdf:
+        paginas = pdf.pages[:10]  # limita para evitar timeout
+        
+        # Estratégia 1: extract_text simples (funciona na maioria dos PDFs)
+        textos_simples = []
+        for page in paginas:
+            t = page.extract_text() or ""
+            textos_simples.append(t)
+        texto_simples = "\n".join(textos_simples).strip()
+        
+        # Se o texto simples for razoável (>200 chars), usa direto
+        if len(texto_simples) > 200:
+            return texto_simples
+        
+        # Estratégia 2: extract_words — reconstrói o texto palavra a palavra
+        # (mais robusto para PDFs com layout de coluna ou caixas de texto fragmentadas)
+        print("⚠️ Texto simples muito curto, tentando extract_words...", flush=True)
+        palavras_all = []
+        for page in paginas:
+            try:
+                words = page.extract_words(x_tolerance=3, y_tolerance=3)
+                if words:
+                    # Ordena por posição Y depois X para reconstruir a ordem de leitura
+                    words_sorted = sorted(words, key=lambda w: (round(w['top'] / 10), w['x0']))
+                    linha_atual = []
+                    y_anterior = None
+                    for w in words_sorted:
+                        y = round(w['top'] / 10)
+                        if y_anterior is not None and y != y_anterior:
+                            palavras_all.append(" ".join(linha_atual))
+                            linha_atual = []
+                        linha_atual.append(w['text'])
+                        y_anterior = y
+                    if linha_atual:
+                        palavras_all.append(" ".join(linha_atual))
+            except Exception as e:
+                print(f"  extract_words falhou na página: {e}", flush=True)
+        
+        texto_words = "\n".join(palavras_all).strip()
+        if len(texto_words) > len(texto_simples):
+            return texto_words
+        
+        # Retorna o melhor resultado entre as duas estratégias
+        return texto_simples or texto_words
+
+
 def parsear_despacho(file_path: str) -> dict:
     """Função principal: aceita PDF, HTML ou ZIP de processo SEI."""
     ext = os.path.splitext(file_path)[1].lower()
@@ -27,10 +78,7 @@ def parsear_despacho(file_path: str) -> dict:
                 soup = BeautifulSoup(f.read(), "html.parser")
                 texto = soup.get_text(" ")
         elif ext == ".pdf":
-            with pdfplumber.open(file_path) as pdf:
-                # Limita leitura às primeiras 10 páginas para prevenção de timeout
-                for page in pdf.pages[:10]:
-                    texto += (page.extract_text() or "") + "\n"
+            texto = _extrair_texto_pdf(file_path)
         else:
             with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                 texto = f.read()

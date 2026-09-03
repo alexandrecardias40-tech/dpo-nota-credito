@@ -18,7 +18,7 @@ app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR  = os.path.join(BASE_DIR, "uploads")
-PLANILHA_BASE = os.path.join(os.path.dirname(BASE_DIR), "UGR.xlsx")
+PLANILHA_BASE = os.path.join(BASE_DIR, "UGR.xlsx")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 _planilha_cache: dict = {}
@@ -94,6 +94,43 @@ def processar_pdf():
         ia_utilizada = False
         dados_ia = {}
 
+        # --- INTEGRAÇÃO COM IA (GEMINI) (Executa sempre que houver texto) ---
+        if api_key and resultado.get("texto"):
+            from ai_parser import extrair_dados_com_ia
+            print("🚀 Usando IA (Gemini) para interpretar o despacho...", flush=True)
+            import re
+            texto_completo_ia = resultado["texto"]
+            
+            marcadores_inicio = [
+                r'(?i)(homologad[ao]\s+a)',
+                r'(?i)(solicito\s+o)',
+                r'(?i)(solicita-se)',
+                r'(?i)(ao\s+decanato)',
+                r'(?i)(encaminhe[-\s]se)',
+                r'(?i)(em\s+atenção)',
+                r'(?i)(trata[-\s]se)',
+                r'(?i)(pelo\s+exposto)',
+                r'(?i)(diante\s+do)',
+                r'(?i)(\bdespacho\b[^nº])',
+            ]
+            texto_para_ia = texto_completo_ia
+            for marcador in marcadores_inicio:
+                m = re.search(marcador, texto_completo_ia)
+                if m:
+                    texto_para_ia = texto_completo_ia[m.start():]
+                    break
+            
+            print(f"TEXTO ENVIADO PARA IA (inicio):\n{texto_para_ia[:300]}", flush=True)
+            dados_ia = extrair_dados_com_ia(texto_para_ia, api_key)
+            if dados_ia and not dados_ia.get("erro"):
+                ia_utilizada = True
+                if dados_ia.get("ugr"):
+                    resultado["campos"]["fonte_credito"] = {"label": "Tipo de Crédito", "valor": dados_ia["ugr"], "confianca": "alta"}
+                if dados_ia.get("nd"):
+                    resultado["campos"]["objeto"] = {"label": "Objeto/Descrição", "valor": dados_ia["nd"], "confianca": "alta"}
+                if dados_ia.get("favorecido"):
+                    resultado["campos"]["favorecido_nome"] = {"label": "Nome do Favorecido", "valor": dados_ia["favorecido"], "confianca": "alta"}
+
         if _planilha_cache:
             acao  = resultado["campos"].get("acao_cod", {}).get("valor", "")
             valor = resultado["campos"].get("valor", {}).get("valor", "")
@@ -114,43 +151,6 @@ def processar_pdf():
                     acao = "20RK"
                     resultado["campos"]["acao_cod"]  = {"label": "Código da Ação", "valor": acao, "confianca": "media"}
                     resultado["campos"]["acao_nome"] = {"label": "Nome da Ação", "valor": "FUNCIONAMENTO DE INSTITUICOES FEDERAIS DE ENSINO SUPERIOR", "confianca": "media"}
-
-            # --- INTEGRAÇÃO COM IA (GEMINI) ---
-            if api_key and resultado.get("texto"):
-                from ai_parser import extrair_dados_com_ia
-                print("🚀 Usando IA (Gemini) para interpretar o despacho...", flush=True)
-                import re
-                texto_completo_ia = resultado["texto"]
-                
-                marcadores_inicio = [
-                    r'(?i)(homologad[ao]\s+a)',
-                    r'(?i)(solicito\s+o)',
-                    r'(?i)(solicita-se)',
-                    r'(?i)(ao\s+decanato)',
-                    r'(?i)(encaminhe[-\s]se)',
-                    r'(?i)(em\s+atenção)',
-                    r'(?i)(trata[-\s]se)',
-                    r'(?i)(pelo\s+exposto)',
-                    r'(?i)(diante\s+do)',
-                    r'(?i)(\bdespacho\b[^nº])',
-                ]
-                texto_para_ia = texto_completo_ia
-                for marcador in marcadores_inicio:
-                    m = re.search(marcador, texto_completo_ia)
-                    if m:
-                        texto_para_ia = texto_completo_ia[m.start():]
-                        break
-                
-                print(f"TEXTO ENVIADO PARA IA (inicio):\n{texto_para_ia[:300]}", flush=True)
-                dados_ia = extrair_dados_com_ia(texto_para_ia, api_key)
-                if dados_ia:
-                    ia_utilizada = True
-                    if dados_ia.get("ugr"):
-                        resultado["campos"]["fonte_credito"] = {"label": "Tipo de Crédito", "valor": dados_ia["ugr"], "confianca": "alta"}
-                    if dados_ia.get("nd"):
-                        resultado["campos"]["objeto"] = {"label": "Objeto/Descrição", "valor": dados_ia["nd"], "confianca": "alta"}
-                    if dados_ia.get("favorecido"):
-                        resultado["campos"]["favorecido_nome"] = {"label": "Nome do Favorecido", "valor": dados_ia["favorecido"], "confianca": "alta"}
 
             fonte_cred = resultado["campos"].get("fonte_credito", {}).get("valor", "").upper()
             texto_raw = resultado.get("texto", "")

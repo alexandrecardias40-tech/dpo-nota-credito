@@ -14,10 +14,10 @@ app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR  = os.path.join(BASE_DIR, "uploads")
-PLANILHA_BASE = os.path.join(BASE_DIR, "data", "planilha_base.xlsx")
+PLANILHA_BASE = os.path.join(os.path.dirname(BASE_DIR), "UGR.xlsx")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-_planilha_cache: list = []
+_planilha_cache: dict = {}
 
 
 # ── Carregar planilha base no boot ────────────────────────────────────────────
@@ -65,6 +65,17 @@ def processar_pdf():
     if "pdf" not in request.files:
         return jsonify({"ok": False, "erro": "Arquivo não enviado"}), 400
 
+    # A chave é lida da variável de ambiente GEMINI_API_KEY (definida no Render / .env)
+    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
+    if not api_key and os.path.exists(".env"):
+        try:
+            with open(".env") as env_f:
+                for line in env_f:
+                    if line.startswith("GEMINI_API_KEY="):
+                        api_key = line.split("=", 1)[1].strip().strip('"').strip("'")
+        except Exception:
+            pass
+    
     f = request.files["pdf"]
     ext = os.path.splitext(f.filename)[1].lower() or ".pdf"
     path = os.path.join(UPLOAD_DIR, f"despacho_temp{ext}")
@@ -100,99 +111,169 @@ def processar_pdf():
                 resultado["campos"]["acao_cod"]  = {"label": "Código da Ação", "valor": acao, "confianca": "media"}
                 resultado["campos"]["acao_nome"] = {"label": "Nome da Ação", "valor": "FUNCIONAMENTO DE INSTITUICOES FEDERAIS DE ENSINO SUPERIOR", "confianca": "media"}
 
-        # Fallback 2: busca textual genérica na planilha por Favorecido/PI/UGR
-        if not acao:
-            for term in (fav, obj):
-                if not term or len(term) < 3:
-                    continue
-                words = [w for w in term.upper().replace("/", " ").replace("-", " ").split()
-                         if len(w) >= 4 and w not in ("PARA", "DECANATO", "REMANEJAMENTO", "RECURSOS",
-                                                        "NOTA", "CREDITO", "VALOR", "REAIS", "DEBITO",
-                                                        "UNIDADES", "ADMINISTRATIVAS", "PAGAMENTO",
-                                                        "EMISSAO", "EMISSÃO", "EMPENHO", "CURSO")]
-                for w in words:
-                    match_row = next((r for r in _planilha_cache
-                                      if w in r.get("ugr_nome", "").upper()
-                                      or w in r.get("pi_nome", "").upper()
-                                      or w in r.get("acao_nome", "").upper()), None)
-                    if match_row:
-                        acao = match_row["acao"]
-                        resultado["campos"]["acao_cod"]  = {"label": "Código da Ação", "valor": acao, "confianca": "media"}
-                        resultado["campos"]["acao_nome"] = {"label": "Nome da Ação", "valor": match_row["acao_nome"], "confianca": "media"}
-                        break
-                if acao:
+        # --- INTEGRAÇÃO COM IA (GEMINI) ---
+        ia_utilizada = False
+        dados_ia = {}
+        if api_key and resultado.get("texto"):
+            from ai_parser import extrair_dados_com_ia
+            print("🚀 Usando IA (Gemini) para interpretar o despacho...", flush=True)
+            
+            # Remover cabeçalho do SEI antes de enviar para a IA
+            # O cabeçalho do SEI contém metadados como:
+            # "Centro de custo: X" e "Para: Y" que confundem a IA
+            # O corpo do despacho começa geralmente com expressões como:
+            # "Solicito", "Homologo", "Encaminhe-se", "Ao", "Senhor"
+            import re
+            texto_completo_ia = resultado["texto"]
+            
+            # Tenta localizar onde o corpo real do despacho começa
+            # buscando a primeira ocorrência de palavras que começam o texto do despacho
+            marcadores_inicio = [
+                r'(?i)(homologad[ao]\s+a)',
+                r'(?i)(solicito\s+o)',
+                r'(?i)(solicita-se)',
+                r'(?i)(ao\s+decanato)',
+                r'(?i)(encaminhe[-\s]se)',
+                r'(?i)(em\s+atenção)',
+                r'(?i)(trata[-\s]se)',
+                r'(?i)(pelo\s+exposto)',
+                r'(?i)(diante\s+do)',
+                r'(?i)(\bdespacho\b[^nº])',  # 'Despacho' que nao seja 'Despacho nº'
+            ]
+            texto_para_ia = texto_completo_ia
+            for marcador in marcadores_inicio:
+                m = re.search(marcador, texto_completo_ia)
+                if m:
+                    texto_para_ia = texto_completo_ia[m.start():]
                     break
+            
+            print(f"TEXTO ENVIADO PARA IA (inicio):\n{texto_para_ia[:300]}", flush=True)
+            dados_ia = extrair_dados_com_ia(texto_para_ia, api_key)
+            if dados_ia:
+                ia_utilizada = True
+                if dados_ia.get("ugr"):
+                    # Coloca a UGR inteligente no lugar da fonte de crédito (que é usada no txt_full)
+                    resultado["campos"]["fonte_credito"] = {"label": "Tipo de Crédito", "valor": dados_ia["ugr"], "confianca": "alta"}
+                if dados_ia.get("nd"):
+                    resultado["campos"]["objeto"] = {"label": "Objeto/Descrição", "valor": dados_ia["nd"], "confianca": "alta"}
+                if dados_ia.get("favorecido"):
+                    resultado["campos"]["favorecido_nome"] = {"label": "Nome do Favorecido", "valor": dados_ia["favorecido"], "confianca": "alta"}
+        # ----------------------------------
+        
+        # Fallback 2 removed: Ação não é mais buscada iterando sobre _planilha_cache
 
         # Identificar dicas semânticas do despacho para escolha precisa da linha
-        nd_hint, ugr_hint, pi_hint = "", "", ""
-        txt_full = (str(obj) + " " + str(fav)).lower()
-
-        # Extrai centro de custo e tipo de crédito detectados pelo parser
-        centro = resultado["campos"].get("centro_custo", {}).get("valor", "").upper()
+        # ── A IA é a única fonte de hints agora ─────────────────────────────────
+        # UGR hint: vem exclusivamente da IA (via fonte_credito preenchida acima)
         fonte_cred = resultado["campos"].get("fonte_credito", {}).get("valor", "").upper()
+        texto_raw = resultado.get("texto", "")
+        txt_full = texto_raw.lower()
 
-        # ── Mapeamento Semântico de PI/UGR por tipo de despesa ───────────────────
-        if any(k in txt_full for k in ("estagiár", "estagiar", "estágio", "estagio")):
-            # Estagiários: crédito centralizado na DOR para redistribuição por demanda
-            nd_hint  = "339000"
-            ugr_hint = "152371"
-            pi_hint  = "VGY01N0118N"
+        ugr_hint = fonte_cred
+        nd_hint = ""
+        pi_hint = ""
+        
+        # Traduzir a ND textual da IA para o código numérico correto
+        if dados_ia.get("nd"):
+            nd_texto = dados_ia["nd"].lower().strip()
+            ND_MAPA = {
+                "capacitacao": "339039", "capacitação": "339039",
+                "inscricao": "339039",  "inscrição": "339039",
+                "inscricao em curso": "339039", "inscrição em curso": "339039",
+                "inscricao em evento": "339039", "inscrição em evento": "339039",
+                "treinamento": "339039",
+                "servicos de terceiros": "339039", "serviços de terceiros": "339039",
+                "reembolso": "339093",
+                "restituicao": "339093", "restituição": "339093",
+                "indenizacao": "339093", "indenização": "339093",
+                "diaria": "339014",    "diária": "339014", "diárias": "339014",
+                "passagem": "339033",  "passagens": "339033",
+                "bolsa": "339018",
+                "auxilio financeiro": "339018", "auxílio financeiro": "339018",
+                "material de consumo": "339030", "material consumo": "339030",
+                "equipamento": "449052", "material permanente": "449052",
+                "gecc": "339036",
+                "gratificacao": "339036", "gratificação": "339036",
+            }
+            # Procura match exato ou parcial
+            nd_code = None
+            for chave, codigo in ND_MAPA.items():
+                if chave in nd_texto or nd_texto in chave:
+                    nd_code = codigo
+                    break
+            if nd_code:
+                nd_hint = nd_code
+                print(f"IA ND '{nd_texto}' → código {nd_code}", flush=True)
+        
 
-        elif any(k in txt_full for k in ("bolsa", "auxílio financeiro", "auxiliar financeiro", "estudante", "cuc")):
-            # Bolsas/auxílios DEX
-            nd_hint  = "339018"
-            ugr_hint = "154153"
-            pi_hint  = "MXX01G21C4N"
-
-        elif any(k in txt_full for k in ("gecc", "gratificaç", "gratificac", "encargo de curso", "encargo de concurso")):
-            # GECC - Gratificação por Encargo de Curso ou Concurso
-            # Origem: 230639 / 1050A000AP / PI VGY01N0105N / ND 339000 — na UGR da unidade solicitante
-            nd_hint  = "339000"
-            pi_hint  = "VGY01N0105N"
-            # Tenta identificar a UGR pela unidade emissora (centro de custo)
-            if "DPO" in centro or "PLANEJAMENTO" in centro or "ORCAMENTO" in centro:
-                ugr_hint = "152387"
-            elif "DAF" in centro or "ADMINISTRACAO" in centro or "ADMINISTRAÇÃO" in centro:
-                ugr_hint = "154040"
-
-        elif "unbtv" in txt_full:
-            # UnBTV: Rádio e Televisão Universitárias
-            nd_hint      = "339000"
-            pi_hint      = "VGY01N0105N"
-            ugr_hint     = "154190"
-
-        elif any(k in txt_full for k in ("capacitaç", "capacitac", "curso", "treinamento", "procap")) and \
-             any(k in txt_full for k in ("empenho", "empresa", "fornecedor", "cnpj")):
-            # Capacitação com empresa fornecedora externa (PROCAP/empresa)
-            nd_hint = "339039"
-
-        elif any(k in txt_full for k in ("diária", "diaria")):
-            nd_hint = "339014"
-
-        elif any(k in txt_full for k in ("passagem",)):
-            nd_hint = "339033"
-
-        elif any(k in fonte_cred for k in ("UNIDADES ADMINISTRATIVAS", "CREDITO PARA UNIDADES")):
-            # Crédito para Unidades Administrativas genérico → PI VGY01N0105N
-            nd_hint = "339000"
-            pi_hint = "VGY01N0105N"
-            # Tenta refinar UGR pelo centro de custo do despacho
-            if "DPO" in centro or "PLANEJAMENTO" in centro:
-                ugr_hint = "152387"
-
+        # Casos especiais que a IA não cobre (códigos fixos de sistema)
         orig_ugr_hint = ""
         if "unbtv" in txt_full:
             orig_ugr_hint = "154190"
+            ugr_hint = "154190"
+            nd_hint = "339000"
+            pi_hint = "VGY01N0105N"
 
-        if acao:
-            from parser_planilha import sugerir_celulas
-            sugestao = sugerir_celulas(_planilha_cache, acao, valor, nd_hint=nd_hint, ugr_hint=ugr_hint, pi_hint=pi_hint, orig_ugr_hint=orig_ugr_hint)
-            # Buscar nome oficial da Ação na planilha para garantir precisão
-            row_acao = next((r for r in _planilha_cache if str(r.get("acao")).strip().upper() == str(acao).strip().upper() and r.get("acao_nome")), None)
-            if row_acao and row_acao["acao_nome"]:
-                resultado["campos"]["acao_nome"] = {"label": "Nome da Ação", "valor": row_acao["acao_nome"], "confianca": "alta"}
+        # Agora chamamos sugerir_celulas passando o texto completo e os hints
+        from parser_planilha import sugerir_celulas
+        print(f"DEBUG APP.PY -> chamando sugerir_celulas com ugr_hint={ugr_hint}", flush=True)
+        sugestao = sugerir_celulas(
+            dados_planilha=_planilha_cache, 
+            texto_completo=txt_full, 
+            ugr_hint=ugr_hint, 
+            nd_hint=nd_hint, 
+            pi_hint=pi_hint, 
+            orig_ugr_hint=orig_ugr_hint
+        )
 
-    return jsonify({"ok": True, "dados": resultado, "sugestao": sugestao})
+        if ia_utilizada:
+            resumo = dados_ia.get('resumo', 'Resumo não gerado.')
+            ugr_ia = dados_ia.get('ugr', 'Não identificada')
+            nd_ia = dados_ia.get('nd', '')
+            fav_ia = dados_ia.get('favorecido', 'Não identificado')
+            # Código: prioridade 1 = mapeado pela IA, prioridade 2 = encontrado pelo sistema
+            nd_codigo = nd_hint or (sugestao or {}).get('destino') and sugestao['destino'].get('nd', '') or ''
+            nd_nome_sug = (sugestao or {}).get('destino') and sugestao['destino'].get('nd_nome', '') or ''
+            if nd_ia and nd_codigo:
+                nd_display = f"{nd_ia} → <strong>{nd_codigo}</strong>"
+            elif nd_codigo:
+                nd_display = f"<strong>{nd_codigo}</strong> — {nd_nome_sug} <em style='color:#94a3b8;font-size:11px;'>(encontrado pelo sistema)</em>"
+            elif nd_ia:
+                nd_display = f"{nd_ia} <em style='color:#f59e0b;font-size:11px;'>(é necessario mapear um código)</em>"
+            else:
+                nd_display = '<em style="color:#94a3b8;">Não identificada</em>'
+            
+            sugestao["prova_noves"]["ugr"] = "✨ Análise da Inteligência Artificial"
+            sugestao["prova_noves"]["nd"] = f"""
+            <div style="font-size:13px; line-height:1.6; color:#1e293b;">
+                <div style="background:#f8fafc; border-left:4px solid #3b82f6; padding:12px 16px; margin-bottom:16px; border-radius:4px;">
+                    <strong style="color:#0f172a; font-size:14px; display:block; margin-bottom:6px;">📝 Resumo do Despacho</strong>
+                    <span style="color:#475569;">{resumo}</span>
+                </div>
+                
+                <h4 style="font-size:14px; font-weight:800; color:#0f172a; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">🔎 Dados Extraídos para a NC</h4>
+                
+                <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
+                    <div style="background:#fff; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; display:flex; align-items:center;">
+                        <span style="font-weight:700; color:#475569; width:150px;">🏢 UGR Resp.:</span>
+                        <span style="color:#2563eb; font-weight:700; flex:1;">{ugr_ia}</span>
+                    </div>
+                    <div style="background:#fff; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; display:flex; align-items:center;">
+                        <span style="font-weight:700; color:#475569; width:150px;">💸 Natureza (ND):</span>
+                        <span style="color:#059669; font-weight:700; flex:1;">{nd_display}</span>
+                    </div>
+                    <div style="background:#fff; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; display:flex; align-items:center;">
+                        <span style="font-weight:700; color:#475569; width:150px;">👤 Favorecido:</span>
+                        <span style="color:#d97706; font-weight:700; flex:1;">{fav_ia}</span>
+                    </div>
+                </div>
+            </div>
+            """
+        elif "erro" in dados_ia:
+            sugestao["prova_noves"]["ugr"] = "⚠️ Falha ao comunicar com a IA."
+            sugestao["prova_noves"]["nd"] = f"Erro: {dados_ia['erro']}"
+
+    return jsonify({"ok": True, "dados": resultado, "sugestao": sugestao, "ia_utilizada": ia_utilizada})
 
 
 # ── Substituir planilha (upload manual) ──────────────────────────────────────
@@ -243,8 +324,6 @@ def gerar_xml():
     if is_bad(dados.get("ano_nc")): erros.append("Ano NC em branco")
     if is_bad(dados.get("data_emissao")): erros.append("Data de Emissão em branco")
     if is_bad(dados.get("processo_sei")): erros.append("Número do Processo SEI está incompleto (XXXX)")
-    if is_bad(dados.get("favorecido_nome")): erros.append("Nome do Favorecido está fictício ou em branco")
-    if is_bad(dados.get("cnpj")): erros.append("CNPJ/CPF do Favorecido está fictício ou em branco (XX.XXX...)")
 
     if erros:
         return jsonify({"ok": False, "erro": "Não foi possível gerar o XML SIAFIWeb. Dados incompletos:\n• " + "\n• ".join(erros)}), 400

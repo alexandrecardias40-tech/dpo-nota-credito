@@ -581,7 +581,7 @@
     .alert-danger { background: #fef2f2; border: 1px solid #fecdd3; color: #991b1b; }
 
     /* MODAL */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.40); backdrop-filter: blur(6px); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
     .modal-overlay.open { display: flex; }
     .modal-box { background: #ffffff; border-radius: 16px; width: 100%; max-width: 960px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); overflow: hidden; animation: modalUp 0.2s ease; }
     @keyframes modalUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -619,11 +619,14 @@
   <div class="header-content">
     <div class="brand">
       <div class="brand-logo">🏛️</div>
+      
       <div class="brand-info">
         <h1>Notas de Crédito Orçamentárias</h1>
         <p>Sistema Auxiliar para Emissão no SIAFIWeb</p>
       </div>
     </div>
+    
+    
   </div>
 
   <div class="step-bar">
@@ -641,18 +644,16 @@
 <div id="v-upload" class="view">
   <div class="hero-card">
     <h2 class="hero-title">Gerador de Notas de Crédito — UnB/DPO</h2>
-    <p class="hero-subtitle">Carregue o Despacho SEI (PDF, HTML ou ZIP do processo completo) para extração automática dos dados e cruzamento com a planilha orçamentária.</p>
+    <p class="hero-subtitle">Carregue o Despacho SEI (PDF) para extração automática dos dados e cruzamento com a planilha orçamentária.</p>
 
     <label class="upload-zone" id="zp" for="ip"
            ondragover="dOver(event,'zp')" ondragleave="dLeave('zp')" ondrop="dDrop(event,'zp','ip')">
-      <input type="file" id="ip" accept=".pdf,.html,.htm,.zip" onchange="onPDF(this)" style="display:none;">
+      <input type="file" id="ip" accept=".pdf" onchange="onPDF(this)" style="display:none;">
       <div class="upload-icon-box" id="upload-icon">📄</div>
       <div class="upload-title" id="upload-title">Clique para selecionar o arquivo</div>
       <div class="upload-hint" id="upload-hint">ou arraste e solte o Despacho SEI aqui</div>
       <div class="format-badges" id="format-badges">
         <span class="format-badge pdf">📕 PDF</span>
-        <span class="format-badge html">📗 HTML</span>
-        <span class="format-badge zip">📦 ZIP do Processo SEI</span>
       </div>
       <div class="file-name-badge" id="pname"></div>
     </label>
@@ -671,7 +672,7 @@
       <div class="cf-item">
         <div class="cf-num">1</div>
         <div class="cf-title">📂 Carregue o Despacho</div>
-        <div class="cf-desc">Selecione o arquivo PDF, HTML ou o ZIP completo do processo SEI exportado do sistema.</div>
+        <div class="cf-desc">Selecione o arquivo PDF do despacho exportado do sistema SEI.</div>
       </div>
       <div class="cf-item">
         <div class="cf-num">2</div>
@@ -688,6 +689,20 @@
 </div>
 
 <!-- ════════════════════════════ PASSO 3: SUCESSO / EMISSÃO XML ════════════════════════════ -->
+<!-- MODAL PROVA DOS NOVES -->
+<div id="modal-prova" class="modal-overlay">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-header">
+      <div id="modal-prova-title" class="modal-title">✨ Análise da IA</div>
+      <button style="background:transparent; border:none; color:#fff; font-size:18px; font-weight:900; cursor:pointer; line-height:1; padding:4px 8px;" onclick="fecharProvaNoves()">✕</button>
+    </div>
+    <div id="modal-prova-body" class="modal-body"></div>
+    <div style="padding:16px 24px; border-top:1px solid #e2e8f0; text-align:right; background:#f8fafc;">
+      <button class="btn btn-outline" onclick="fecharProvaNoves()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <div id="v-sucesso" class="view hidden">
   <div class="hero-card" style="max-width:760px; text-align:left; padding:40px;">
     <div style="text-align:center; margin-bottom:24px;">
@@ -720,8 +735,8 @@
 <!-- ════════════════════════════ PASSO 2: REVISÃO DE DADOS ════════════════════════════ -->
 <div id="v-dados" class="view hidden">
 
-  <!-- Card 1: SEI -->
-  <div class="card">
+  <!-- Card 1: SEI (Hidden per user request) -->
+  <div class="card" style="display: none;">
     <div class="card-header">
       <div class="card-title">
         <div class="card-title-icon">📋</div>
@@ -825,7 +840,7 @@
       </div>
       <div class="field span-3">
         <label class="field-label">Descrição da NC <span style="font-weight:400; font-size:10px;">(SIAFIWeb)</span></label>
-        <textarea id="f-desc" style="min-height:64px;"></textarea>
+        <textarea id="f-desc" style="min-height:64px; overflow-y:hidden; box-sizing:border-box;" oninput="this.style.height='';this.style.height=this.scrollHeight+'px'"></textarea>
         <button class="btn btn-outline btn-sm" style="align-self:flex-start; margin-top:6px;" onclick="autoDesc()">✨ Gerar texto automático</button>
       </div>
     </div>
@@ -838,13 +853,9 @@
         <div class="card-title-icon">🔢</div>
         Células Orçamentárias (Origem & Destino)
       </div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn btn-outline btn-sm" onclick="abrirModal(-1,'origem')">🔍 Buscar na Planilha</button>
-        <button class="btn btn-outline btn-sm" onclick="addItem()">＋ Adicionar Item</button>
-      </div>
     </div>
 
-    <div id="cross-result" class="hidden" style="margin-bottom:16px;"></div>
+    <div id="cross-result" class="hidden" style="margin-bottom: 20px;"></div>
     <div id="items"></div>
   </div>
 
@@ -1031,6 +1042,8 @@ async function processar(){
 
   try{
     const fd=new FormData();
+    const apiKey = localStorage.getItem('gemini_api_key') || '';
+    if(apiKey) fd.append('api_key', apiKey);
     fd.append('pdf', pdfFile);
     const rp=await fetch('/api/processar-pdf',{method:'POST',body:fd});
     const jp=await rp.json();
@@ -1045,6 +1058,11 @@ async function processar(){
     }
 
     preencherCampos(SEI);
+    if (jp.dados_ia && jp.dados_ia.descricao_nc) {
+      g('f-desc').value = jp.dados_ia.descricao_nc;
+      g('f-desc').style.height = '';
+      g('f-desc').style.height = g('f-desc').scrollHeight + 'px';
+    }
     ITEMS=[];addItem(true);
     renderCrossResult(SUGESTAO);
     goStep2();
@@ -1110,37 +1128,38 @@ function autoDesc(){
   }
   d = d.replace(/\s+/g,' ').trim();
   if(!d.endsWith('.')) d += '.';
-  g('f-desc').value = d.substring(0,600);
+  const el = g('f-desc');
+  el.value = d.substring(0,600);
+  // Auto-resize
+  el.style.height = '';
+  el.style.height = el.scrollHeight + 'px';
 }
 
 function renderCrossResult(sug){
   const box=g('cross-result');
+  if(!box) return;
   if(!sug){box.classList.add('hidden');return;}
-  if(!sug.encontrou){
-    box.className='alert alert-warning';
-    box.innerHTML=`⚠️ ${sug.avisos[0]||'Células não encontradas automaticamente na planilha base.'} Preencha manualmente.`;
-    box.classList.remove('hidden');return;
-  }
+  
+  // Guardar prova_noves globalmente para o modal
+  window._currentProvaNoves = sug.prova_noves || {ugr: "Não fornecida", nd: "Não fornecida"};
 
-  let html=`<div class="alert alert-success" style="flex-direction:column; align-items:flex-start;">
-    <div><strong>✅ Cruzamento realizado com sucesso!</strong> ${sug.total_acao} linhas encontradas na planilha base para a ação.</div>`;
-
-  if(sug.origem){
-    const o=sug.origem;
-    html+=`<div style="font-size:12px; margin-top:4px;">
-      <b>Origem:</b> PTRES ${o.ptres} | Fonte ${o.fonte} | UGR ${o.ugr} | PI ${o.pi} | ND ${o.nd} (${o.nd_nome})
-      ${o.saldo>0?`<b style="color:var(--success)"> | Saldo: R$ ${o.saldo.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b>`:''}
-    </div>`;
-  }
-  if(sug.destino){
-    const d=sug.destino;
-    html+=`<div style="font-size:12px; margin-top:2px;">
-      <b>Destino:</b> PTRES ${d.ptres} | Fonte ${d.fonte} | UGR ${d.ugr} | PI ${d.pi} | ND ${d.nd||'— informe o ND'} (${d.nd_nome})
-    </div>`;
-  }
-  html+='</div>';
+  let html=`
+  <div style="display:flex; justify-content:flex-end; width:100%; margin-bottom:8px;">
+    <button class="btn btn-outline btn-sm" style="font-size:12px; padding:6px 14px; border-color:#8b5cf6; color:#8b5cf6; box-shadow:0 2px 6px rgba(139,92,246,0.2); font-weight:700;" onclick="abrirProvaNoves()">✨ Análise da IA</button>
+  </div>`;
+  
   box.innerHTML=html;
   box.classList.remove('hidden');
+}
+
+function abrirProvaNoves() {
+  const pn = window._currentProvaNoves;
+  g('modal-prova-title').textContent = pn.ugr || "✨ Análise da Inteligência Artificial";
+  g('modal-prova-body').innerHTML = pn.nd;
+  g('modal-prova').classList.add('open');
+}
+function fecharProvaNoves() {
+  g('modal-prova').classList.remove('open');
 }
 
 function onTipo(){
@@ -1161,11 +1180,11 @@ const COLS=[
 
 function addItem(init=false){
   const valor=init?g('f-val')?.value||'':'';
-  let orig={esfera:'1',ptres:'',fonte:'',nd:'',ugr:'',pi:'',valor};
-  let dest={esfera:'1',ptres:'',fonte:'',nd:'',ugr:'',pi:'',valor};
-  if(init && SUGESTAO?.encontrou){
-    if(SUGESTAO.origem)orig={...orig,...SUGESTAO.origem,valor};
-    if(SUGESTAO.destino)dest={...dest,...SUGESTAO.destino,valor};
+  let orig={esfera:'1',ptres:'230639',fonte:'1050A000AP',nd:'339000',ugr:'',pi:'',valor};
+  let dest={esfera:'1',ptres:'230639',fonte:'1050A000AP',nd:'',ugr:'',pi:'',valor};
+  if(init && SUGESTAO?.origem){
+    if(SUGESTAO.origem)orig={...orig,...SUGESTAO.origem,valor, esfera:'1',ptres:'230639',fonte:'1050A000AP',nd:'339000'};
+    if(SUGESTAO.destino)dest={...dest,...SUGESTAO.destino,valor, esfera:'1',ptres:'230639',fonte:'1050A000AP'};
   }
   ITEMS.push({origens:[orig],destinos:[dest],alts:init?(SUGESTAO?.alternativas||[]):[]});
   renderItems();
@@ -1184,16 +1203,12 @@ function renderItems(){
         <div>${ITEMS.length>1?`<button class="btn btn-danger btn-sm" onclick="rmItem(${i})">🗑 Remover</button>`:''}</div>
       </div>
       <div class="cell-section">
-        <div class="cell-title">↑ ORIGEM DE CRÉDITO <button class="btn btn-outline btn-sm" onclick="abrirModal(${i},'origem')">🔍 Buscar</button></div>
+        <div class="cell-title">↑ ORIGEM DE CRÉDITO</div>
         ${cellRow(i,'orig')}
       </div>
       <div class="cell-section">
-        <div class="cell-title dest">↓ DESTINO DE CRÉDITO
-          <button class="btn btn-outline btn-sm" onclick="abrirModal(${i},'destino')">🔍 Buscar</button>
-          <button class="btn btn-outline btn-sm" onclick="copiarOrig(${i})">↕ Copiar Origem</button>
-        </div>
+        <div class="cell-title dest">↓ DESTINO DE CRÉDITO</div>
         ${cellRow(i,'dest')}
-        ${item.alts&&item.alts.length>1?renderAlts(i,item.alts):''}
       </div>`;
     cont.appendChild(b);
     populateCell(i,'orig',item.origens[0]);
@@ -1392,10 +1407,17 @@ function renderTabela(rows){
 }
 
 function usarCelula(row){
-  const cel={esfera:'1',ptres:row.ptres,fonte:row.fonte,nd:row.nd_cod,nd_nome:row.nd_nome,ugr:row.ugr_cod,ugr_nome:row.ugr_nome,pi:row.pi_cod,pi_nome:row.pi_nome,valor:''};
+  const cel={esfera:'1',ptres:'230639',fonte:'1050A000AP',nd:row.nd_cod,nd_nome:row.nd_nome,ugr:row.ugr_cod,ugr_nome:row.ugr_nome,pi:row.pi_cod,pi_nome:row.pi_nome,valor:''};
   const idx=mIdx>=0?mIdx:0;
-  if(mTipo==='origem'){ITEMS[idx].origens[0]={...ITEMS[idx].origens[0],...cel};populateCell(idx,'orig',ITEMS[idx].origens[0]);}
-  else{ITEMS[idx].destinos[0]={...ITEMS[idx].destinos[0],...cel};populateCell(idx,'dest',ITEMS[idx].destinos[0]);}
+  if(mTipo==='origem'){
+    cel.nd = '339000';
+    ITEMS[idx].origens[0]={...ITEMS[idx].origens[0],...cel};
+    populateCell(idx,'orig',ITEMS[idx].origens[0]);
+  }
+  else{
+    ITEMS[idx].destinos[0]={...ITEMS[idx].destinos[0],...cel};
+    populateCell(idx,'dest',ITEMS[idx].destinos[0]);
+  }
   fecharModal();
 }
 
@@ -1422,18 +1444,19 @@ async function gerarXML(silentOnly=false){
   const cpf = g('f-cpf')?.value?.trim();
   const desc = g('f-desc')?.value?.trim();
 
-  if(isPlaceholder(ug)) erros.push('UG Emitente (ex: 154040)');
-  if(isPlaceholder(ano)) erros.push('Ano da Nota de Crédito (ex: 2026)');
-  if(isPlaceholder(data)) erros.push('Data de Emissão (ex: DD/MM/AAAA)');
-  if(isPlaceholder(sei)) erros.push('Número do Processo SEI válido');
+  // Validations for hidden fields removed as per user request to hide the block
+  // if(isPlaceholder(ug)) erros.push('UG Emitente (ex: 154040)');
+  // if(isPlaceholder(ano)) erros.push('Ano da Nota de Crédito (ex: 2026)');
+  // if(isPlaceholder(data)) erros.push('Data de Emissão (ex: DD/MM/AAAA)');
+  // if(isPlaceholder(sei)) erros.push('Número do Processo SEI válido');
 
-  if(tipo !== 'detalhamento' && isPlaceholder(ncRef)){
-    erros.push(`NC de Referência para ${tipo} (ex: 2026NC001234)`);
-  }
+  // if(tipo !== 'detalhamento' && isPlaceholder(ncRef)){
+  //   erros.push(`NC de Referência para ${tipo} (ex: 2026NC001234)`);
+  // }
 
-  if(isPlaceholder(fav)) erros.push('Nome do Favorecido / Beneficiário (preencha o nome real)');
-  if(isPlaceholder(cnpj) && isPlaceholder(cpf)) erros.push('CNPJ ou CPF do Favorecido (preencha um número válido)');
-  if(isPlaceholder(desc)) erros.push('Descrição / Observação da Nota de Crédito');
+  // if(isPlaceholder(fav)) erros.push('Nome do Favorecido / Beneficiário (preencha o nome real)');
+  // if(isPlaceholder(cnpj) && isPlaceholder(cpf)) erros.push('CNPJ ou CPF do Favorecido (preencha um número válido)');
+  // if(isPlaceholder(desc)) erros.push('Descrição / Observação da Nota de Crédito');
 
   if(!ITEMS || ITEMS.length === 0){
     erros.push('Nenhum item de Célula Orçamentária foi adicionado');
@@ -1579,5 +1602,8 @@ g('f-ano').value=new Date().getFullYear();
   setInterval(ping, INTERVAL_MS);
 })();
 </script>
+
+
+
 </body>
 </html>

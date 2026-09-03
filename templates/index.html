@@ -1045,9 +1045,14 @@ async function processar(){
     const apiKey = localStorage.getItem('gemini_api_key') || '';
     if(apiKey) fd.append('api_key', apiKey);
     fd.append('pdf', pdfFile);
-    const rp=await fetch('/api/processar-pdf',{method:'POST',body:fd});
-    const jp=await rp.json();
-    if(!jp.ok) throw new Error(jp.erro||'Erro ao processar PDF');
+    const rp = await fetch('/api/processar-pdf', {method:'POST', body:fd});
+    let jp;
+    try {
+      jp = await rp.json();
+    } catch(err) {
+      throw new Error(`Erro do servidor (${rp.status}). Verifique se o arquivo enviado é um PDF válido.`);
+    }
+    if(!jp.ok) throw new Error(jp.erro || 'Erro ao processar PDF');
     SEI=jp.dados; SUGESTAO=jp.sugestao;
 
     const excelInput = g('ie');

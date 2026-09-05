@@ -199,23 +199,17 @@ def processar_pdf():
 
             from base_regras import obter_codigo_ugr
 
-            ugr_raw = (
-                dados_combinados.get('ugr') or 
-                resultado["campos"].get("fonte_credito", {}).get("valor") or 
-                (sugestao and sugestao.get('destino') and sugestao['destino'].get('ugr_nome')) or 
-                "Não identificada"
-            )
+            ugr_sigla_corpo = dados_combinados.get('ugr') or ""
 
-            # Extração/localização do código numérico da UGR (SIAFI)
-            ugr_cod = (sugestao and sugestao.get('destino') and sugestao['destino'].get('ugr')) or ""
-            if not ugr_cod or ugr_cod == "XXXXXXXXX":
-                ugr_cod = obter_codigo_ugr(ugr_raw, texto_raw)
+            if ugr_sigla_corpo and ugr_sigla_corpo != "Não identificada":
+                ugr_cod = (sugestao and sugestao.get('destino') and sugestao['destino'].get('ugr')) or ""
+                if not ugr_cod or ugr_cod == "XXXXXXXXX":
+                    ugr_cod = obter_codigo_ugr(ugr_sigla_corpo, texto_raw)
 
-            if ugr_raw and ugr_raw != "Não identificada":
-                if ugr_cod and ugr_cod != "XXXXXXXXX" and ugr_cod not in ugr_raw:
-                    ugr_extr = f"{ugr_raw} – ({ugr_cod})"
+                if ugr_cod and ugr_cod != "XXXXXXXXX" and ugr_cod not in ugr_sigla_corpo:
+                    ugr_extr = f"{ugr_sigla_corpo} – ({ugr_cod})"
                 else:
-                    ugr_extr = ugr_raw
+                    ugr_extr = ugr_sigla_corpo
             else:
                 ugr_extr = "Não identificada"
 

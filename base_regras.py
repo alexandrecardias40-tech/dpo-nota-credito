@@ -693,39 +693,52 @@ def obter_codigo_ugr(ugr_str: str = "", texto_contexto: str = "") -> str:
     return ""
 
 
+def _remover_cabecalho_centro_custo(texto: str) -> str:
+    """
+    Remove o cabeçalho 'Centro de custo: ... Para: ...' do despacho SEI,
+    garantindo que a UGR seja buscada apenas no corpo do texto.
+    """
+    if not texto:
+        return ""
+    linhas = [l.strip() for l in texto.splitlines() if l.strip()]
+    if linhas and re.match(r"^\s*[Cc]entro\s+de\s+custo\s*:", linhas[0], re.I):
+        m_corpo = re.search(r"(?:Para\s*:.*?)(?=\bHomologada|\bSolicito|\bAutorizo|\bDetalhamento|\bDescentralização|\bEm\s+\d{2}/\d{2})(.*)", linhas[0], re.I)
+        if m_corpo:
+            return "\n".join([m_corpo.group(1).strip()] + linhas[1:])
+        return "\n".join(linhas[1:])
+    texto_limpo = re.sub(r"^\s*[Cc]entro\s+de\s+custo\s*:.*?(?:Para\s*:.*?)?(?=\bHomologada|\bSolicito|\bAutorizo|\bDetalhamento|\bDescentralização|\bEm\s+\d{2}/\d{2}|$)", "", texto, flags=re.I | re.DOTALL)
+    return texto_limpo.strip()
+
+
 def detectar_ugr(texto: str) -> tuple[str, int]:
     """
-    Detecta a UGR responsável pelos recursos.
+    Detecta a UGR responsável pelos recursos EXCLUSIVAMENTE no corpo do despacho.
+    Ignora o cabeçalho da unidade emissora/remetente ('Centro de custo: ... Para: ...').
     Retorna: (sigla_ugr, score_confianca)
     """
-    txt_norm = _norm(texto)
+    if not texto:
+        return ("", 0)
 
-    # 1. Tentar padrões regex de alta confiança
+    # 1. Remover o cabeçalho "Centro de custo: ... Para: ..."
+    texto_corpo = _remover_cabecalho_centro_custo(texto)
+    if not texto_corpo:
+        return ("", 0)
+
+    # 2. Tentar padrões regex de alta confiança no corpo do despacho
     for peso, padrao in PADROES_UGR:
-        m = re.search(padrao, texto, re.I)
+        m = re.search(padrao, texto_corpo, re.I)
         if m:
             sigla = m.group(1).strip().upper()
             if len(sigla) >= 2 and sigla.isalpha():
                 return (sigla, peso)
 
-    # 2. Fallback: comparar "Centro de custo: NOME" com mapa de nomes
-    cc_match = re.search(
-        r"[Cc]entro\s+de\s+custo\s*[:\-]\s*(.{5,150}?)(?:\s*Para:|$)",
-        texto, re.I
-    )
-    if cc_match:
-        nome_cc = _norm(cc_match.group(1))
-        for nome_chave, sigla in NOME_PARA_SIGLA_UGR.items():
-            if _norm(nome_chave) in nome_cc:
-                return (sigla, 7)
-
-    # 3. Procurar qualquer sigla de UGR conhecida no texto
+    # 3. Procurar siglas de UGR conhecidas com contexto orçamentário/financeiro explícito no corpo
     for sigla_conhecida in MAPA_CODIGOS_UGR.keys():
-        if re.search(rf"\b(?:recursos?\s+d[aoe]|crédito\s+para|unidade\s+administrativa/|ugr|para\s+[ao]s?)\s+{re.escape(sigla_conhecida)}\b", texto, re.I):
+        padrao_contexto = rf"(?:recursos?\s+d[aoe]|crédito\s+para|crédito\s+d[aoe]|matriz/|unidade\s+administrativa/|ugr|dotação|saldo|autorizado\s+pel[ao]).{{0,40}}?\b{re.escape(sigla_conhecida)}\b"
+        if re.search(padrao_contexto, texto_corpo, re.I):
             return (sigla_conhecida, 8)
-        if re.search(rf"\b{re.escape(sigla_conhecida)}\b", texto):
-            return (sigla_conhecida, 6)
 
+    # Se não houver UGR identificada no corpo do texto -> Retorna vazio (NÃO inventa)
     return ("", 0)
 
 

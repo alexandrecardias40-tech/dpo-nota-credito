@@ -177,7 +177,7 @@ def sugerir_celulas(dados_planilha: dict, texto_completo: str, ugr_hint: str = "
                 break
                 
     # 3. Montar resultado
-    ugr_cod  = ugr_encontrada["ugr"]  if ugr_encontrada else "XXXXXXXXX"
+    ugr_cod  = ugr_encontrada["ugr"]  if ugr_encontrada else ""
     ugr_nome = ugr_encontrada["nome"] if ugr_encontrada else "(preencha a UGR)"
     ugr_pi   = ugr_encontrada["pi"]   if ugr_encontrada else ""
     

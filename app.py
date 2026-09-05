@@ -203,10 +203,10 @@ def processar_pdf():
 
             if ugr_sigla_corpo and ugr_sigla_corpo != "Não identificada":
                 ugr_cod = (sugestao and sugestao.get('destino') and sugestao['destino'].get('ugr')) or ""
-                if not ugr_cod or ugr_cod == "XXXXXXXXX":
+                if not ugr_cod:
                     ugr_cod = obter_codigo_ugr(ugr_sigla_corpo, texto_raw)
 
-                if ugr_cod and ugr_cod != "XXXXXXXXX" and ugr_cod not in ugr_sigla_corpo:
+                if ugr_cod and ugr_cod not in ugr_sigla_corpo:
                     ugr_extr = f"{ugr_sigla_corpo} – ({ugr_cod})"
                 else:
                     ugr_extr = ugr_sigla_corpo

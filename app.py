@@ -93,32 +93,55 @@ def processar_pdf():
         sugestao = None
         ia_utilizada = False
         dados_ia = {}
+        dados_regras = {}
 
-        # --- INTEGRAÇÃO COM IA (GEMINI) (Executa sempre que houver texto) ---
-        if api_key and resultado.get("texto"):
-            from ai_parser import extrair_dados_com_ia
-            print("🚀 Usando IA (Gemini) para interpretar o despacho...", flush=True)
-            import re
-            texto_completo_ia = resultado["texto"]
+        texto_despacho = resultado.get("texto", "")
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # ETAPA 1: Motor de Regras Local (instantâneo, sem API)
+        # Cobre ~95% dos despachos de NC de universidade federal.
+        # ═══════════════════════════════════════════════════════════════════════
+        if texto_despacho:
+            from base_regras import extrair_por_regras
+            proc_sei = resultado.get("campos", {}).get("processo_sei", {}).get("valor", "")
+            val_despacho = resultado.get("campos", {}).get("valor", {}).get("valor", "")
             
-            # Envia o texto completo do PDF para a IA — ela já é instruída a ignorar o cabeçalho SEI
-            # A tentativa anterior de cortar o texto pelo marcador causava casos onde só
-            # o cabeçalho (ex: "Despacho XXXXX SEI ...") era enviado, resultando em resposta vazia.
-            texto_para_ia = texto_completo_ia
-            
-            print(f"TEXTO ENVIADO PARA IA (inicio):\\n{texto_para_ia[:300]}", flush=True)
-            dados_ia = extrair_dados_com_ia(texto_para_ia, api_key)
-            if dados_ia and not dados_ia.get("erro"):
-                ia_utilizada = True
-                if dados_ia.get("ugr"):
-                    resultado["campos"]["fonte_credito"] = {"label": "Tipo de Crédito", "valor": dados_ia["ugr"], "confianca": "alta"}
-                # nd_descricao (campo 'nd') e nd_codigo vêm direto do ai_parser agora
-                if dados_ia.get("nd"):
-                    resultado["campos"]["objeto"] = {"label": "Objeto/Descrição", "valor": dados_ia["nd"], "confianca": "alta"}
-                if dados_ia.get("descricao_nc"):
-                    resultado["campos"]["descricao_ia"] = {"label": "Descrição NC (IA)", "valor": dados_ia["descricao_nc"], "confianca": "alta"}
-                if dados_ia.get("favorecido"):
-                    resultado["campos"]["favorecido_nome"] = {"label": "Nome do Favorecido", "valor": dados_ia["favorecido"], "confianca": "alta"}
+            dados_regras = extrair_por_regras(
+                texto_despacho, 
+                _planilha_cache,
+                processo_sei=proc_sei,
+                valor=val_despacho
+            )
+            print(f"⚡ Regras locais: UGR={dados_regras.get('ugr')} ND={dados_regras.get('nd_codigo')} "
+                  f"Fav={dados_regras.get('favorecido')} Confiança={dados_regras.get('confianca_global', 0):.0%}", flush=True)
+
+            # Preencher campos com resultado das regras
+            if dados_regras.get("ugr"):
+                resultado["campos"]["fonte_credito"] = {
+                    "label": "Tipo de Crédito", "valor": dados_regras["ugr"], "confianca": "alta"
+                }
+            if dados_regras.get("nd"):
+                resultado["campos"]["objeto"] = {
+                    "label": "Objeto/Descrição", "valor": dados_regras["nd"], "confianca": "alta"
+                }
+            if dados_regras.get("favorecido"):
+                resultado["campos"]["favorecido_nome"] = {
+                    "label": "Nome do Favorecido", "valor": dados_regras["favorecido"], "confianca": "alta"
+                }
+            if dados_regras.get("descricao_nc"):
+                resultado["campos"]["descricao_ia"] = {
+                    "label": "Descrição NC", "valor": dados_regras["descricao_nc"], "confianca": "alta"
+                }
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # ETAPA 2: Processamento 100% Local (IA desativada)
+        # ═══════════════════════════════════════════════════════════════════════
+        confianca_regras = dados_regras.get("confianca_global", 0.0) if dados_regras else 0.0
+        if texto_despacho:
+            print(f"⚡ Regras locais (Confiança={confianca_regras:.0%}, ND={dados_regras.get('nd_codigo')}) — IA desativada.", flush=True)
+
+        # Dados 100% provenientes do motor de regras locais
+        dados_combinados = {k: v for k, v in dados_regras.items() if v}
 
         if _planilha_cache:
             acao  = resultado["campos"].get("acao_cod", {}).get("valor", "")
@@ -146,8 +169,8 @@ def processar_pdf():
             txt_full = texto_raw.lower()
 
             ugr_hint = fonte_cred
-            # nd_hint vem diretamente do campo nd_codigo retornado pela IA (já é código numérico)
-            nd_hint = dados_ia.get("nd_codigo", "") if dados_ia else ""
+            # nd_hint: preferência para o código ND detectado pelas regras, depois IA
+            nd_hint = dados_combinados.get("nd_codigo", "") or dados_ia.get("nd_codigo", "")
             pi_hint = ""
 
             # Caso especial UnBTV — override de hints
@@ -168,55 +191,95 @@ def processar_pdf():
                 orig_ugr_hint=orig_ugr_hint
             )
 
-            if ia_utilizada:
-                resumo      = dados_ia.get('resumo', 'Resumo não gerado.')
-                ugr_ia      = dados_ia.get('ugr', 'Não identificada')
-                nd_ia       = dados_ia.get('nd', '')           # descrição textual
-                nd_codigo   = dados_ia.get('nd_codigo', '') or nd_hint   # código numérico
-                fav_ia      = dados_ia.get('favorecido', 'Não identificado')
-                descricao_nc = dados_ia.get('descricao_nc', '')
-                nd_nome_sug = (sugestao or {}).get('destino') and sugestao['destino'].get('nd_nome', '') or ''
+            # Garante que sugestao tem estrutura mínima para o painel
+            if sugestao is None:
+                sugestao = {"prova_noves": {"ugr": "", "nd": ""}, "destino": None}
+            elif "prova_noves" not in sugestao:
+                sugestao["prova_noves"] = {"ugr": "", "nd": ""}
 
-                if nd_ia and nd_codigo:
-                    nd_display = f"{nd_ia} → <strong>{nd_codigo}</strong>"
-                elif nd_codigo:
-                    nd_display = f"<strong>{nd_codigo}</strong> — {nd_nome_sug or nd_ia} <em style='color:#94a3b8;font-size:11px;'>(detectado)</em>"
-                elif nd_ia:
-                    nd_display = f"{nd_ia} <em style='color:#f59e0b;font-size:11px;'>(sem código mapeado)</em>"
+            from base_regras import obter_codigo_ugr
+
+            ugr_raw = (
+                dados_combinados.get('ugr') or 
+                resultado["campos"].get("fonte_credito", {}).get("valor") or 
+                (sugestao and sugestao.get('destino') and sugestao['destino'].get('ugr_nome')) or 
+                "Não identificada"
+            )
+
+            # Extração/localização do código numérico da UGR (SIAFI)
+            ugr_cod = (sugestao and sugestao.get('destino') and sugestao['destino'].get('ugr')) or ""
+            if not ugr_cod or ugr_cod == "XXXXXXXXX":
+                ugr_cod = obter_codigo_ugr(ugr_raw, texto_raw)
+
+            if ugr_raw and ugr_raw != "Não identificada":
+                if ugr_cod and ugr_cod != "XXXXXXXXX" and ugr_cod not in ugr_raw:
+                    ugr_extr = f"{ugr_raw} – ({ugr_cod})"
                 else:
-                    nd_display = '<em style="color:#94a3b8;">Não identificada</em>'
+                    ugr_extr = ugr_raw
+            else:
+                ugr_extr = "Não identificada"
 
-                sugestao["prova_noves"]["ugr"] = "✨ Análise da Inteligência Artificial"
-                sugestao["prova_noves"]["nd"] = f"""
-                <div style="font-size:13px; line-height:1.6; color:#1e293b;">
-                    <div style="background:#f8fafc; border-left:4px solid #3b82f6; padding:12px 16px; margin-bottom:16px; border-radius:4px;">
-                        <strong style="color:#0f172a; font-size:14px; display:block; margin-bottom:6px;">📝 Resumo do Despacho</strong>
-                        <span style="color:#475569;">{resumo}</span>
+            from base_regras import _validar_nome_favorecido
+
+            fav_cand = (
+                dados_combinados.get('favorecido') or 
+                resultado["campos"].get("favorecido_nome", {}).get("valor") or 
+                ""
+            )
+            if fav_cand and _validar_nome_favorecido(fav_cand):
+                fav_extr = fav_cand
+            else:
+                fav_extr = "Não identificado"
+            nd_texto = dados_combinados.get('nd', '') or resultado["campos"].get("objeto", {}).get("valor", "")
+            nd_codigo = dados_combinados.get('nd_codigo', '') or nd_hint
+            resumo = (
+                dados_combinados.get('descricao_nc') or 
+                dados_combinados.get('resumo') or 
+                resultado["campos"].get("descricao_ia", {}).get("valor") or 
+                resultado["campos"].get("objeto", {}).get("valor") or 
+                "Despacho orçamentário processado com sucesso."
+            )
+            nd_nome_sug = (sugestao or {}).get('destino') and sugestao['destino'].get('nd_nome', '') or ''
+            badge_titulo = "⚡ Análise Instantânea"
+
+            if nd_texto and nd_codigo:
+                nd_display = f"{nd_texto} → <strong>{nd_codigo}</strong>"
+            elif nd_codigo:
+                nd_display = f"<strong>{nd_codigo}</strong> — {nd_nome_sug or nd_texto} <em style='color:#94a3b8;font-size:11px;'>(detectado)</em>"
+            elif nd_texto:
+                nd_display = f"{nd_texto} <em style='color:#f59e0b;font-size:11px;'>(sem código mapeado)</em>"
+            else:
+                nd_display = '<em style="color:#94a3b8;">Não identificada</em>'
+
+            sugestao["prova_noves"]["ugr"] = badge_titulo
+            sugestao["prova_noves"]["nd"] = f"""
+            <div style="font-size:13px; line-height:1.6; color:#1e293b;">
+                <div style="background:#f8fafc; border-left:4px solid #3b82f6; padding:12px 16px; margin-bottom:16px; border-radius:4px;">
+                    <strong style="color:#0f172a; font-size:14px; display:block; margin-bottom:6px;">📝 Resumo do Despacho</strong>
+                    <span style="color:#475569;">{resumo}</span>
+                </div>
+                
+                <h4 style="font-size:14px; font-weight:800; color:#0f172a; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">🔎 Dados Extraídos para a NC</h4>
+                
+                <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
+                    <div style="background:#fff; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; display:flex; align-items:center;">
+                        <span style="font-weight:700; color:#475569; width:150px;">🏢 UGR Resp.:</span>
+                        <span style="color:#2563eb; font-weight:700; flex:1;">{ugr_extr}</span>
                     </div>
-                    
-                    <h4 style="font-size:14px; font-weight:800; color:#0f172a; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">🔎 Dados Extraídos para a NC</h4>
-                    
-                    <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
-                        <div style="background:#fff; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; display:flex; align-items:center;">
-                            <span style="font-weight:700; color:#475569; width:150px;">🏢 UGR Resp.:</span>
-                            <span style="color:#2563eb; font-weight:700; flex:1;">{ugr_ia}</span>
-                        </div>
-                        <div style="background:#fff; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; display:flex; align-items:center;">
-                            <span style="font-weight:700; color:#475569; width:150px;">💸 Natureza (ND):</span>
-                            <span style="color:#059669; font-weight:700; flex:1;">{nd_display}</span>
-                        </div>
-                        <div style="background:#fff; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; display:flex; align-items:center;">
-                            <span style="font-weight:700; color:#475569; width:150px;">👤 Favorecido:</span>
-                            <span style="color:#d97706; font-weight:700; flex:1;">{fav_ia}</span>
-                        </div>
+                    <div style="background:#fff; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; display:flex; align-items:center;">
+                        <span style="font-weight:700; color:#475569; width:150px;">💸 Natureza (ND):</span>
+                        <span style="color:#059669; font-weight:700; flex:1;">{nd_display}</span>
+                    </div>
+                    <div style="background:#fff; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; display:flex; align-items:center;">
+                        <span style="font-weight:700; color:#475569; width:150px;">👤 Favorecido:</span>
+                        <span style="color:#d97706; font-weight:700; flex:1;">{fav_extr}</span>
                     </div>
                 </div>
-                """
-            elif "erro" in dados_ia:
-                sugestao["prova_noves"]["ugr"] = "⚠️ Falha ao comunicar com a IA."
-                sugestao["prova_noves"]["nd"] = f"Erro: {dados_ia['erro']}"
+            </div>
+            """
 
-        return jsonify({"ok": True, "dados": resultado, "sugestao": sugestao, "ia_utilizada": ia_utilizada, "dados_ia": dados_ia})
+
+        return jsonify({"ok": True, "dados": resultado, "sugestao": sugestao, "ia_utilizada": ia_utilizada, "dados_ia": dados_combinados})
     except Exception as e:
         import traceback
         traceback.print_exc()

@@ -228,9 +228,9 @@ DESPACHO:
 """
 
     ultimo_erro = ""
-    for tentativa in range(2):
+    for tentativa in range(1):
         try:
-            response = model.generate_content(prompt, request_options={"timeout": 30})
+            response = model.generate_content(prompt, request_options={"timeout": 4})
             texto_resposta = response.text.strip()
 
             # Limpar markdown se vier com crases
@@ -241,7 +241,7 @@ DESPACHO:
             if texto_resposta.endswith("```"):
                 texto_resposta = texto_resposta[:-3]
 
-            print(f"RESPOSTA BRUTA DA IA (tentativa {tentativa+1}):\n{texto_resposta}", flush=True)
+            print(f"RESPOSTA BRUTA DA IA:\n{texto_resposta}", flush=True)
 
             try:
                 dados = json.loads(texto_resposta.strip())
@@ -250,25 +250,18 @@ DESPACHO:
                 return {"raw": texto_resposta, "erro": "A IA não retornou um JSON válido."}
 
             # ── Pós-processamento: validar e normalizar campos ──────────────
-            # 1. Validar UGR contra lista conhecida
             ugr_original = dados.get("ugr", "")
             dados["ugr"] = _validar_ugr(ugr_original)
 
-            # 2. Consolidar nd / nd_codigo / nd_descricao no formato esperado pelo app.py
-            # O campo "nd" era o que o app.py usava antes — mantemos compatibilidade
             nd_codigo = str(dados.get("nd_codigo", "") or dados.get("nd", "") or "").strip()
             nd_descricao = str(dados.get("nd_descricao", "") or "").strip()
 
-            # 3. Fallback: detectar ND localmente se a IA não identificou
             if not nd_codigo:
                 nd_codigo_local = _detectar_nd_local(texto_despacho)
                 if nd_codigo_local:
                     nd_codigo = nd_codigo_local
-                    print(f"ND detectada localmente: {nd_codigo}", flush=True)
 
-            # Reescrever campo "nd" como a descrição (para compatibilidade com app.py)
             if not nd_descricao and nd_codigo:
-                # Mapa reverso simples para obter o nome do código
                 _cod_nome = {
                     "339014": "Diárias", "339018": "Bolsa/Auxílio a Estudantes",
                     "339020": "Auxílio a Pesquisador", "339030": "Material de Consumo",
@@ -280,15 +273,13 @@ DESPACHO:
                 }
                 nd_descricao = _cod_nome.get(nd_codigo, "")
 
-            dados["nd"] = nd_descricao        # Descrição textual (compatibilidade)
-            dados["nd_codigo"] = nd_codigo    # Código numérico explícito
+            dados["nd"] = nd_descricao
+            dados["nd_codigo"] = nd_codigo
             dados["raw"] = texto_resposta
             return dados
 
         except Exception as e:
             ultimo_erro = str(e)
-            print(f"Tentativa {tentativa+1} falhou: {e}", flush=True)
-            if tentativa < 1:
-                time.sleep(1)
+            print(f"Tentativa IA falhou (timeout/erro): {e}", flush=True)
 
-    return {"erro": f"Servidor Google temporariamente indisponível: {ultimo_erro}"}
+    return {"erro": f"Servidor Google indisponível ou timeout: {ultimo_erro}"}

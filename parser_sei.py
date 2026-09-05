@@ -192,12 +192,15 @@ def _parsear_texto(texto: str) -> dict:
         r"emissão\s+de\s+empenho\s+(?:em\s+favor\s+da?o?|ao?|à)\s+([A-ZÁÉÍÓÚÀÂÊÎÔÛÃÕÇ0-9\.\-\/ ]{5,120}?)(?=\s*\(|\s*,|\s*\.\s|\s*CNPJ|\s*CPF|$)",
         r"empenho\s+(?:em\s+favor\s+da?o?|ao?|à)\s+([A-ZÁÉÍÓÚÀÂÊÎÔÛÃÕÇ0-9\.\-\/ ]{5,120}?)(?=\s*\(|\s*,|\s*\.\s|\s*CNPJ|\s*CPF|$)",
         r"(?:contratad[ao]|fornecedor|empresa|pessoa|favorecido)\s*[:\-]?\s*([A-ZÁÉÍÓÚÀÂÊÎÔÛÃÕÇ0-9\.\-\/ ]{5,100}?)(?=\s*\(|\s*,|\s*\.\s|\s*CNPJ|\s*CPF|$)",
-        r"para\s+a\s+UGR\s+d[ao]\s+([A-ZÁÉÍÓÚÀÂÊÎÔÛÃÕÇ0-9\.\-\/ ]{4,80})",
-        r"para\s+o\s+Decanato\s+de\s+([A-ZÁÉÍÓÚÀÂÊÎÔÛÃÕÇ0-9\.\-\/ ]{4,80})",
     ])
     if re.match(r"20\d{2}LC\d{6}", fav, re.I):
         fav = f"LISTA DE CREDORES SIAFI {fav}"
     fav = re.sub(r"\s+(?:Nota|NC|SEI|Processo|conforme|atender|para|de|do|da)\s*$", "", fav, flags=re.I).strip()
+
+    from base_regras import _validar_nome_favorecido
+    if fav and not _validar_nome_favorecido(fav):
+        fav = ""
+
     c["favorecido_nome"] = _f("Nome do Favorecido", fav.rstrip(". "), "media" if fav else "baixa")
 
     # ── Objeto ────────────────────────────────────────────────────────────

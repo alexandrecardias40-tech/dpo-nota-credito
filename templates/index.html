@@ -1119,24 +1119,39 @@ function autoDesc(){
   let fav=g('f-fav').value.trim();
   const cnpj=g('f-cnpj').value.trim(), cpf=g('f-cpf').value.trim();
   let obj=g('f-obj').value.trim();
+  const val=g('f-val')?.value?.trim();
   const tipo=document.querySelector('input[name=tnc]:checked')?.value||'detalhamento';
-  const tl={detalhamento:'Detalhamento de crédito visando a emissão de empenho',descentralizacao:'Descentralização de crédito',devolucao:'Devolução de descentralização de crédito',anulacao:'Anulação de descentralização de crédito'}[tipo];
+  const tl={detalhamento:'Detalhamento de crédito',descentralizacao:'Descentralização de crédito',devolucao:'Devolução de descentralização de crédito',anulacao:'Anulação de descentralização de crédito'}[tipo];
   
   // Limpar frases/fragmentos incompletos
   fav = fav.replace(/\s+(?:Nota|NC|SEI|Processo|conforme|atender|para|de|do|da|-)\s*$/i, '').trim();
   obj = obj.replace(/\s+(?:Nota|NC|SEI|Processo|conforme|a\s+fim\s+de|para|-)\s*$/i, '').trim();
 
   let d='';
-  if(sei) d += `SEI: ${sei} – `;
-  d += tl;
-  if(fav){
-    d += ` a ${fav}`;
-    const doc = cnpj || cpf;
-    if(doc) d += ` (${doc})`;
+  if (obj.toLowerCase().includes('reembolso') || obj.toLowerCase().includes('indeniza')) {
+    d += `Reembolso de despesa própria`;
+    if (obj) {
+      const oc = obj.replace(/^(visando|referente a|para|com vistas a)\s*/i, '').trim();
+      d += ` (${oc})`;
+    }
+  } else {
+    d += tl;
+    if (obj) {
+      const oc = obj.replace(/^(visando|referente a|para|com vistas a)\s*/i, '').trim();
+      d += ` referente a ${oc.charAt(0).toLowerCase() + oc.slice(1)}`;
+    }
   }
-  if(obj){
-    const oc = obj.replace(/^com vistas? [àa]\s*/i,'').replace(/^[,;]\s*/,'').trim();
-    if(oc) d += `, ${oc.charAt(0).toLowerCase()+oc.slice(1)}`;
+
+  if (fav) {
+    d += ` em favor de ${fav}`;
+    const doc = cnpj || cpf;
+    if (doc) d += ` (${doc})`;
+  }
+  if (val) {
+    d += ` (R$ ${val})`;
+  }
+  if (sei) {
+    d += ` – Proc. SEI ${sei}`;
   }
   d = d.replace(/\s+/g,' ').trim();
   if(!d.endsWith('.')) d += '.';
@@ -1153,11 +1168,11 @@ function renderCrossResult(sug){
   if(!sug){box.classList.add('hidden');return;}
   
   // Guardar prova_noves globalmente para o modal
-  window._currentProvaNoves = sug.prova_noves || {ugr: "Não fornecida", nd: "Não fornecida"};
+  window._currentProvaNoves = sug.prova_noves || {ugr: "⚡ Análise Instantânea", nd: ""};
 
   let html=`
   <div style="display:flex; justify-content:flex-end; width:100%; margin-bottom:8px;">
-    <button class="btn btn-outline btn-sm" style="font-size:12px; padding:6px 14px; border-color:#8b5cf6; color:#8b5cf6; box-shadow:0 2px 6px rgba(139,92,246,0.2); font-weight:700;" onclick="abrirProvaNoves()">✨ Análise da IA</button>
+    <button class="btn btn-outline btn-sm" style="font-size:12px; padding:6px 14px; border-color:#0284c7; color:#0284c7; box-shadow:0 2px 6px rgba(2,132,199,0.2); font-weight:700;" onclick="abrirProvaNoves()">⚡ Análise Instantânea</button>
   </div>`;
   
   box.innerHTML=html;

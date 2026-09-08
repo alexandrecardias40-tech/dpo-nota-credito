@@ -8,6 +8,9 @@ Novidades:
 """
 import os
 import base64
+import threading
+import time
+import urllib.request
 from flask import Flask, render_template, request, jsonify, send_file
 
 # Chave Gemini fallback decodificada em runtime para suporte imediato no Render
@@ -38,6 +41,26 @@ def _boot_planilha():
         print("  ℹ️  Planilha base não encontrada em data/planilha_base.xlsx")
 
 _boot_planilha()
+
+
+# ── Self-ping (evita adormecimento no Render) ─────────────────────────────────
+def _iniciar_self_ping():
+    # Só ativamos o self-ping no ambiente Render para não causar chamadas externas desnecessárias no PC local
+    if os.environ.get("RENDER") == "true":
+        url = "https://dpo-nota-credito.onrender.com/ping"
+        def pinger():
+            while True:
+                time.sleep(300)  # 5 minutos
+                try:
+                    urllib.request.urlopen(url)
+                    print(f"  [Self-Ping] Sucesso: {url}")
+                except Exception as e:
+                    print(f"  [Self-Ping] Erro: {e}")
+        t = threading.Thread(target=pinger, daemon=True)
+        t.start()
+        print(f"  🌐 Self-ping ativado para {url} (a cada 5 min)")
+
+_iniciar_self_ping()
 
 
 # ── Página principal ──────────────────────────────────────────────────────────

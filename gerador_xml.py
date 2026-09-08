@@ -50,35 +50,37 @@ def gerar_xml_zip(dados: dict) -> str:
     L.append(f'    <sb:dataGeracao>{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}</sb:dataGeracao>')
     L.append('    <sb:sequencialGeracao>1</sb:sequencialGeracao>')
     L.append('  </sb:header>')
-    L.append('  <sb:conteudo>')
-    L.append(f'    <{elem} xmlns="{_NS}">')
-    L.append(f"      <ugEmitente>{ug}</ugEmitente>")
-    L.append(f"      <anoNotaCredito>{ano}</anoNotaCredito>")
-    L.append(f"      <dtEmis>{data}</dtEmis>")
+    L.append('  <sb:detalhes>')
+    L.append('    <sb:detalhe>')
+    L.append(f'      <{elem} xmlns="{_NS}">')
+    L.append(f"        <ugEmitente>{ug}</ugEmitente>")
+    L.append(f"        <anoNotaCredito>{ano}</anoNotaCredito>")
+    L.append(f"        <dtEmis>{data}</dtEmis>")
     if cod_tr:
-        L.append(f"      <codTransf>{cod_tr}</codTransf>")
-    L.append(f"      <txtDescricao>{desc}</txtDescricao>")
+        L.append(f"        <codTransf>{cod_tr}</codTransf>")
+    L.append(f"        <txtDescricao>{desc}</txtDescricao>")
 
     for item in itens:
-        L.append(f"      <{tag_item}>")
+        L.append(f"        <{tag_item}>")
         if ug_fav and tipo != "detalhamento":
-            L.append(f"        <ugFavorecida>{ug_fav}</ugFavorecida>")
+            L.append(f"          <ugFavorecida>{ug_fav}</ugFavorecida>")
 
         for orig in item.get("origens", []):
-            L.append("        <origemCredito>")
-            L += _celula_xml(orig, 10)
-            L.append("        </origemCredito>")
+            L.append("          <origemCredito>")
+            L += _celula_xml(orig, 12)
+            L.append("          </origemCredito>")
 
         if tipo == "detalhamento":
             for dest in item.get("destinos", []):
-                L.append("        <destinoCredito>")
-                L += _celula_xml(dest, 10)
-                L.append("        </destinoCredito>")
+                L.append("          <destinoCredito>")
+                L += _celula_xml(dest, 12)
+                L.append("          </destinoCredito>")
 
-        L.append(f"      </{tag_item}>")
+        L.append(f"        </{tag_item}>")
 
-    L.append(f"    </{elem}>")
-    L.append('  </sb:conteudo>')
+    L.append(f"      </{elem}>")
+    L.append('    </sb:detalhe>')
+    L.append('  </sb:detalhes>')
     L.append('  <sb:trailler>')
     L.append('    <sb:quantidadeDetalhe>1</sb:quantidadeDetalhe>')
     L.append('  </sb:trailler>')

@@ -515,7 +515,7 @@ def gerar_descricao_nc(nd_codigo: str, favorecido: str, objeto_resumo: str,
     Gera descrição NC perfeita, lógica e bem articulada para uso no SIAFIWeb.
     """
     fav_nome = favorecido.strip() if favorecido else ""
-    sei_full  = f"Proc. SEI {processo_sei}" if processo_sei else ""
+    sei_full  = f"SEI: {processo_sei}" if processo_sei else ""
     val_str   = f"R$ {valor}" if valor else ""
     ugr_str   = f"Recursos {ugr}" if ugr else ""
 
@@ -611,7 +611,7 @@ def gerar_descricao_nc(nd_codigo: str, favorecido: str, objeto_resumo: str,
             partes.append(f"({val_str})")
 
     base = " – ".join(partes)
-    return f"{base} – {sei_full}." if sei_full else f"{base}."
+    return f"{sei_full} – {base}." if sei_full else f"{base}."
 
 
 

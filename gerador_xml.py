@@ -40,33 +40,41 @@ def gerar_xml_zip(dados: dict) -> str:
 
     L = []
     L.append('<?xml version="1.0" encoding="UTF-8"?>')
-    L.append(f'<{elem} xmlns="{_NS}">')
-    L.append(f"  <ugEmitente>{ug}</ugEmitente>")
-    L.append(f"  <anoNotaCredito>{ano}</anoNotaCredito>")
-    L.append(f"  <dtEmis>{data}</dtEmis>")
+    L.append('<arquivo xmlns="http://www.tesouro.gov.br/siafi/submissao">')
+    L.append('  <header>')
+    L.append('  </header>')
+    L.append('  <conteudo>')
+    L.append(f'    <{elem} xmlns="{_NS}">')
+    L.append(f"      <ugEmitente>{ug}</ugEmitente>")
+    L.append(f"      <anoNotaCredito>{ano}</anoNotaCredito>")
+    L.append(f"      <dtEmis>{data}</dtEmis>")
     if cod_tr:
-        L.append(f"  <codTransf>{cod_tr}</codTransf>")
-    L.append(f"  <txtDescricao>{desc}</txtDescricao>")
+        L.append(f"      <codTransf>{cod_tr}</codTransf>")
+    L.append(f"      <txtDescricao>{desc}</txtDescricao>")
 
     for item in itens:
-        L.append(f"  <{tag_item}>")
+        L.append(f"      <{tag_item}>")
         if ug_fav and tipo != "detalhamento":
-            L.append(f"    <ugFavorecida>{ug_fav}</ugFavorecida>")
+            L.append(f"        <ugFavorecida>{ug_fav}</ugFavorecida>")
 
         for orig in item.get("origens", []):
-            L.append("    <origemCredito>")
-            L += _celula_xml(orig, 6)
-            L.append("    </origemCredito>")
+            L.append("        <origemCredito>")
+            L += _celula_xml(orig, 10)
+            L.append("        </origemCredito>")
 
         if tipo == "detalhamento":
             for dest in item.get("destinos", []):
-                L.append("    <destinoCredito>")
-                L += _celula_xml(dest, 6)
-                L.append("    </destinoCredito>")
+                L.append("        <destinoCredito>")
+                L += _celula_xml(dest, 10)
+                L.append("        </destinoCredito>")
 
-        L.append(f"  </{tag_item}>")
+        L.append(f"      </{tag_item}>")
 
-    L.append(f"</{elem}>")
+    L.append(f"    </{elem}>")
+    L.append('  </conteudo>')
+    L.append('  <trailler>')
+    L.append('  </trailler>')
+    L.append('</arquivo>')
     xml_content = "\n".join(L)
 
     # Empacota em ZIP

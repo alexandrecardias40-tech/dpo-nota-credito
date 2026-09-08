@@ -38,11 +38,12 @@ def gerar_xml_zip(dados: dict) -> str:
 
     tag_item = "itemDetalhamento" if tipo == "detalhamento" else "itemDescentralizacao"
 
+    layout_code = dados.get("layout_siafi", "orcNC").strip() or "orcNC"
     L = []
     L.append('<?xml version="1.0" encoding="UTF-8"?>')
     L.append('<sb:arquivo xmlns:sb="http://www.tesouro.gov.br/siafi/submissao">')
     L.append('  <sb:header>')
-    L.append(f'    <sb:codigoLayout>{elem}</sb:codigoLayout>')
+    L.append(f'    <sb:codigoLayout>{layout_code}</sb:codigoLayout>')
     L.append(f'    <sb:ugResponsavel>{ug}</sb:ugResponsavel>')
     cpf_op = dados.get("cpf_operador", "00000000000").strip() or "00000000000"
     L.append(f'    <sb:cpfResponsavel>{cpf_op}</sb:cpfResponsavel>')

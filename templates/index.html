@@ -835,6 +835,10 @@
         <input id="f-ugfav" type="text" placeholder="Código UG">
       </div>
       <div class="field">
+        <label class="field-label">Layout SIAFI</label>
+        <input id="f-layout" type="text" value="orcNC">
+      </div>
+      <div class="field">
         <label class="field-label">Ano NC</label>
         <input id="f-ano" type="text" placeholder="2026">
       </div>
@@ -1470,6 +1474,7 @@ async function gerarXML(silentOnly=false){
 
   const tipo = document.querySelector('input[name=tnc]:checked')?.value || 'detalhamento';
   const ug = g('f-ug')?.value?.trim();
+  const layout = g('f-layout')?.value?.trim() || 'orcNC';
   const cpfOp = g('f-cpf-operador')?.value?.trim();
   if(ug) localStorage.setItem('nc_ug_emitente', ug);
   if(cpfOp) localStorage.setItem('nc_cpf_operador', cpfOp);
@@ -1538,6 +1543,7 @@ async function gerarXML(silentOnly=false){
 
   const payload={tipo_nc:tipo,ug_emitente:ug,ug_favorecida:g('f-ugfav').value.trim(),ano_nc:ano,data_emissao:data,
     descricao:desc,processo_sei:sei,
+    layout_siafi:layout,
     nc_referencia:g('f-nc').value.trim(),favorecido_nome:fav,
     cpf_operador:cpf_operador,
     cnpj:cnpj||cpf,itens};

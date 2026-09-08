@@ -357,16 +357,16 @@ def gerar_xml():
 
     from gerador_xml import gerar_xml_zip
     try:
-        zip_path = gerar_xml_zip(dados)
+        xml_path = gerar_xml_zip(dados)
         ug  = dados.get("ug_emitente", "154040")
         ano = dados.get("ano_nc", "2026")
         from datetime import datetime
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         return send_file(
-            zip_path,
+            xml_path,
             as_attachment=True,
-            download_name=f"NC_{ug}_{ano}_{ts}.zip",
-            mimetype="application/zip",
+            download_name=f"NC_{ug}_{ano}_{ts}.xml",
+            mimetype="application/xml",
         )
     except Exception as e:
         return jsonify({"ok": False, "erro": str(e)}), 500

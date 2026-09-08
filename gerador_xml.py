@@ -87,16 +87,16 @@ def gerar_xml_zip(dados: dict) -> str:
     L.append('</sb:arquivo>')
     xml_content = "\n".join(L)
 
-    # Empacota em ZIP
+    # Salva arquivo XML diretamente
     tmp     = tempfile.mkdtemp()
     ts      = datetime.now().strftime("%Y%m%d_%H%M%S")
     nome    = f"NC_{ug}_{ano}_{ts}"
-    zip_path = os.path.join(tmp, f"{nome}.zip")
+    xml_path = os.path.join(tmp, f"{nome}.xml")
 
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(f"{nome}.xml", xml_content)
+    with open(xml_path, "w", encoding="utf-8") as f:
+        f.write(xml_content)
 
-    return zip_path
+    return xml_path
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────

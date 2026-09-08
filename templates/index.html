@@ -1546,7 +1546,7 @@ async function gerarXML(silentOnly=false){
     const blob=await res.blob();const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     const m=(res.headers.get('Content-Disposition')||'').match(/filename=(.+)/);
-    a.download=m?m[1]:'NC.zip';a.href=url;document.body.appendChild(a);a.click();
+    a.download=m?m[1]:'NC.xml';a.href=url;document.body.appendChild(a);a.click();
     document.body.removeChild(a);URL.revokeObjectURL(url);
 
     fecharEspelhoNC();

@@ -40,10 +40,17 @@ def gerar_xml_zip(dados: dict) -> str:
 
     L = []
     L.append('<?xml version="1.0" encoding="UTF-8"?>')
-    L.append('<arquivo xmlns="http://www.tesouro.gov.br/siafi/submissao">')
-    L.append('  <header>')
-    L.append('  </header>')
-    L.append('  <conteudo>')
+    L.append('<sb:arquivo xmlns:sb="http://www.tesouro.gov.br/siafi/submissao">')
+    L.append('  <sb:header>')
+    L.append(f'    <sb:codigoLayout>{elem}</sb:codigoLayout>')
+    L.append(f'    <sb:ugResponsavel>{ug}</sb:ugResponsavel>')
+    cpf_op = dados.get("cpf_operador", "00000000000").strip() or "00000000000"
+    L.append(f'    <sb:cpfResponsavel>{cpf_op}</sb:cpfResponsavel>')
+    L.append(f'    <sb:anoReferencia>{ano}</sb:anoReferencia>')
+    L.append(f'    <sb:dataGeracao>{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}</sb:dataGeracao>')
+    L.append('    <sb:sequencialGeracao>1</sb:sequencialGeracao>')
+    L.append('  </sb:header>')
+    L.append('  <sb:conteudo>')
     L.append(f'    <{elem} xmlns="{_NS}">')
     L.append(f"      <ugEmitente>{ug}</ugEmitente>")
     L.append(f"      <anoNotaCredito>{ano}</anoNotaCredito>")
@@ -71,10 +78,11 @@ def gerar_xml_zip(dados: dict) -> str:
         L.append(f"      </{tag_item}>")
 
     L.append(f"    </{elem}>")
-    L.append('  </conteudo>')
-    L.append('  <trailler>')
-    L.append('  </trailler>')
-    L.append('</arquivo>')
+    L.append('  </sb:conteudo>')
+    L.append('  <sb:trailler>')
+    L.append('    <sb:quantidadeDetalhe>1</sb:quantidadeDetalhe>')
+    L.append('  </sb:trailler>')
+    L.append('</sb:arquivo>')
     xml_content = "\n".join(L)
 
     # Empacota em ZIP

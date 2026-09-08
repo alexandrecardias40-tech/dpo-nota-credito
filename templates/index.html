@@ -826,6 +826,10 @@
         <label class="field-label">UG Emitente</label>
         <input id="f-ug" type="text" value="154040">
       </div>
+      <div class="field">
+        <label class="field-label">CPF (Operador SIAFI) <span style="font-weight:400; font-size:10px;">(Obrigatório)</span></label>
+        <input id="f-cpf-operador" type="text" placeholder="Seu CPF (só números)">
+      </div>
       <div class="field hidden" id="fg-ugfav">
         <label class="field-label">UG Favorecida</label>
         <input id="f-ugfav" type="text" placeholder="Código UG">
@@ -1043,6 +1047,10 @@ async function processar(){
   try{
     const fd=new FormData();
     const apiKey = localStorage.getItem('gemini_api_key') || '';
+    const savedUg = localStorage.getItem('nc_ug_emitente');
+    const savedCpfOp = localStorage.getItem('nc_cpf_operador');
+    if(savedUg) g('f-ug').value = savedUg;
+    if(savedCpfOp) g('f-cpf-operador').value = savedCpfOp;
     if(apiKey) fd.append('api_key', apiKey);
     fd.append('pdf', pdfFile);
     const rp = await fetch('/api/processar-pdf', {method:'POST', body:fd});
@@ -1462,9 +1470,13 @@ async function gerarXML(silentOnly=false){
 
   const tipo = document.querySelector('input[name=tnc]:checked')?.value || 'detalhamento';
   const ug = g('f-ug')?.value?.trim();
+  const cpfOp = g('f-cpf-operador')?.value?.trim();
+  if(ug) localStorage.setItem('nc_ug_emitente', ug);
+  if(cpfOp) localStorage.setItem('nc_cpf_operador', cpfOp);
   const ano = g('f-ano')?.value?.trim();
   const data = g('f-data')?.value?.trim();
   const sei = g('f-sei')?.value?.trim();
+  const cpf_operador = g('f-cpf-operador')?.value?.trim().replace(/\D/g, '');
   const ncRef = g('f-nc')?.value?.trim();
   const fav = g('f-fav')?.value?.trim();
   const cnpj = g('f-cnpj')?.value?.trim();
@@ -1526,6 +1538,7 @@ async function gerarXML(silentOnly=false){
   const payload={tipo_nc:tipo,ug_emitente:ug,ug_favorecida:g('f-ugfav').value.trim(),ano_nc:ano,data_emissao:data,
     descricao:desc,processo_sei:sei,
     nc_referencia:g('f-nc').value.trim(),favorecido_nome:fav,
+    cpf_operador:cpf_operador,
     cnpj:cnpj||cpf,itens};
   try{
     const res=await fetch('/api/gerar-xml',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});

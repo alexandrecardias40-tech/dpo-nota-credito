@@ -1485,6 +1485,7 @@ async function gerarXML(silentOnly=false){
 
   // Validations for hidden fields removed as per user request to hide the block
   // if(isPlaceholder(ug)) erros.push('UG Emitente (ex: 154040)');
+  if(!cpfOp || cpfOp.replace(/\D/g, '').length !== 11) erros.push('Seu CPF (Operador SIAFI) é obrigatório e deve ter 11 dígitos para autorização do XML');
   // if(isPlaceholder(ano)) erros.push('Ano da Nota de Crédito (ex: 2026)');
   // if(isPlaceholder(data)) erros.push('Data de Emissão (ex: DD/MM/AAAA)');
   // if(isPlaceholder(sei)) erros.push('Número do Processo SEI válido');

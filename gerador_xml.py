@@ -47,7 +47,7 @@ def gerar_xml_zip(dados: dict) -> str:
     cpf_op = dados.get("cpf_operador", "00000000000").strip() or "00000000000"
     L.append(f'    <sb:cpfResponsavel>{cpf_op}</sb:cpfResponsavel>')
     L.append(f'    <sb:anoReferencia>{ano}</sb:anoReferencia>')
-    L.append(f'    <sb:dataGeracao>{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}</sb:dataGeracao>')
+    L.append(f'    <sb:dataGeracao>{datetime.now().strftime("%Y-%m-%d")}</sb:dataGeracao>')
     L.append('    <sb:sequencialGeracao>1</sb:sequencialGeracao>')
     L.append('  </sb:header>')
     L.append('  <sb:detalhes>')

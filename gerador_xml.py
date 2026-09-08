@@ -38,7 +38,7 @@ def gerar_xml_zip(dados: dict) -> str:
 
     tag_item = "itemDetalhamento" if tipo == "detalhamento" else "itemDescentralizacao"
 
-    layout_code = dados.get("layout_siafi", "orcNC").strip() or "orcNC"
+    layout_code = dados.get("layout_siafi", "NC001").strip() or "NC001"
     L = []
     L.append('<?xml version="1.0" encoding="UTF-8"?>')
     L.append('<sb:arquivo xmlns:sb="http://www.tesouro.gov.br/siafi/submissao">')
